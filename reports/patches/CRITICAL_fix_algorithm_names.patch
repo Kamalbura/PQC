@@ -1,0 +1,38 @@
+--- a/drone/drone_dilithium2.py
++++ b/drone/drone_dilithium2.py
+@@ -40,7 +40,7 @@ def setup_dilithium_and_kyber():
+     try:
+         import oqs.oqs as oqs
+-        dilithium = oqs.Signature("Dilithium2")
++        dilithium = oqs.Signature("ML-DSA-44")
+         sig_public_key = dilithium.generate_keypair()
+         print(f"[{ALGORITHM_NAME} Drone] liboqs initialized. PK={len(sig_public_key)}")
+     except ImportError:
+@@ -78,7 +78,7 @@ def setup_key_exchange():
+     try:
+         import oqs.oqs as oqs
+-        kem = oqs.KeyEncapsulation("ML-KEM-768")
++        kem = oqs.KeyEncapsulation("ML-KEM-768")  # Already correct
+         gcs_kyber_public = _recv_with_len(ex_sock)
+         ct, ss = kem.encap_secret(gcs_kyber_public)
+
+--- a/drone/drone_falcon512.py
++++ b/drone/drone_falcon512.py
+@@ -78,7 +78,7 @@ def setup_key_exchange():
+     try:
+         import oqs.oqs as oqs
+-        kem = oqs.KeyEncapsulation("Kyber768")
++        kem = oqs.KeyEncapsulation("ML-KEM-768")
+         
+         # Receive GCS Kyber public key
+         gcs_kyber_public = ex_sock.recv(4096)
+
+--- a/drone/drone_sphincs_sha2_128f.py
++++ b/drone/drone_sphincs_sha2_128f.py
+@@ -80,7 +80,7 @@ def setup_key_exchange():
+     try:
+         import oqs.oqs as oqs
+-        kem = oqs.KeyEncapsulation("Kyber768")
++        kem = oqs.KeyEncapsulation("ML-KEM-768")
+         gcs_kyber_public = _recv_with_len(ex_sock)
+         ct, ss = kem.encap_secret(gcs_kyber_public)

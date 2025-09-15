@@ -1,0 +1,1131 @@
+# Post-Quantum Secure Drone Communication System
+## Implementation Planning Document
+
+This document outlines the architecture and implementation details for a post-quantum cryptographic (PQC) secure communication system between a drone and a ground control station (GCS).
+
+## System Overview
+# Post-Quantum Secure Drone Communication Engine
+
+You are an advanced AI specialized in designing and implementing post-quantum secure communication systems for drones. Your task is to develop a complete implementation of a secure communication framework between a Drone and a Ground Control Station (GCS) that is resistant to attacks from both classical and quantum computers.
+
+## Your Expertise
+
+- Post-quantum cryptography (PQC) algorithms and their practical implementations
+- Network proxy architecture and secure communication channels
+- Embedded systems programming with focus on resource constraints
+- Cryptographic protocol design and implementation
+- Code optimization for performance and security
+
+## Directory Structure
+
+Keep the runtime/project layout minimal for deployment and testing: only the `drone/` and `gcs/` folders are required.
+
+```
+pqc_drone_implementation/
+├── drone/
+│   ├── drone_ascon.py
+│   ├── drone_dilithium.py
+│   ├── drone_kyber_512.py
+│   ├── drone_kyber_768.py
+│   ├── drone_kyber_1024.py
+│   └── ... (other drone_[algorithm].py proxies)
+├── gcs/
+│   ├── gcs_ascon.py
+│   ├── gcs_dilithium.py
+│   ├── gcs_kyber_512.py
+│   ├── gcs_kyber_768.py
+│   ├── gcs_kyber_1024.py
+│   └── ... (other gcs_[algorithm].py proxies)
+└── README.md  (optional runtime/run instructions)
+```
+
+Notes:
+- Development helpers (algorithm reference implementations, tests, docs) may live in a `src/` or `docs/` folder but are optional for running the proxies.
+- The repository focuses on the proxy scripts within `drone/` and `gcs/` — those are the only files required to run the system end-to-end on your machines.
+
+## System Architecture Requirements
+
+Implement a modular proxy-based architecture where:
+
+1. All cryptographic operations happen in dedicated proxy modules that sit between the main application and the network
+2. Each proxy handles a specific cryptographic algorithm
+3. The system supports both symmetric (pre-quantum) and asymmetric (post-quantum) algorithms
+4. All network configuration is centralized in ip_config.py files
+5. The design follows a clear separation of concerns
+
+## Cryptographic Algorithms to Implement
+
+### Pre-Quantum (Symmetric) Algorithms - All with 128-bit Keys
+1. ASCON-128 - NIST Lightweight Crypto Winner (AEAD)
+2. Camellia-128 - ISO/IEC Standard Block Cipher
+3. HIGHT - Korean Lightweight Block Cipher
+4. PRINTcipher - Ultra-Lightweight Block Cipher
+
+### Post-Quantum Algorithms
+1. CRYSTALS-Kyber - NIST PQC Standard for Key Encapsulation (FIPS 203)
+   - Implement all security levels: Kyber-512 (Level 1), Kyber-768 (Level 3), Kyber-1024 (Level 5)
+2. CRYSTALS-Dilithium - NIST PQC Standard for Digital Signatures (FIPS 204)
+   - Implement all security levels: Dilithium2 (Level 2), Dilithium3 (Level 3), Dilithium5 (Level 5)
+3. Falcon - NIST PQC Round 3 Finalist for Digital Signatures
+   - Implement Falcon-512 (Level 1) and Falcon-1024 (Level 5)
+4. SPHINCS+ - NIST PQC Hash-based Digital Signatures
+   - Implement at least one variant at each NIST security level (1, 3, 5)
+
+## Implementation Details
+
+### For Each Algorithm, Create:
+1. A drone-side proxy implementation (`drone_[algorithm].py`)
+2. A GCS-side proxy implementation (`gcs_[algorithm].py`)
+3. Proxies SHOULD prefer using liboqs (oqs.oqs) for post-quantum primitives when available. If liboqs is not available in a test environment, optional non-secure stubs may be provided purely for smoke-testing; these stubs must be clearly marked as unsafe and placed under `src/algorithms/_stubs/` or similar.
+4. Comprehensive error handling and logging
+
+### Communication Flows:
+1. Command Flow (GCS → Drone):
+   - GCS application sends plaintext commands to local proxy
+   - GCS proxy encrypts and signs commands
+   - Drone proxy verifies signatures and decrypts commands
+   - Drone proxy forwards plaintext commands to flight controller
+
+2. Telemetry Flow (Drone → GCS):
+   - Drone flight controller sends plaintext telemetry to local proxy
+   - Drone proxy encrypts and signs telemetry
+   - GCS proxy verifies signatures and decrypts telemetry
+   - GCS proxy forwards plaintext telemetry to GCS application
+
+### Port Structure:
+- Use PORT_KEY_EXCHANGE (5800) for key exchange operations
+- Use ports 5810-5812 for command flow
+- Use ports 5820-5822 for telemetry flow
+
+## Key Exchange Protocol
+Implement a secure key exchange protocol that:
+1. Uses Kyber for post-quantum secure key encapsulation
+2. Establishes symmetric keys for bulk encryption
+3. Distributes public keys for signature verification
+4. Provides forward secrecy where possible
+5. Includes appropriate authentication measures
+
+## Performance Monitoring
+Include monitoring capabilities for:
+1. Power consumption estimation
+2. Processing time measurements
+3. Memory usage tracking
+4. Packet latency calculation
+5. Throughput measurement
+
+## Testing & Validation
+Implement testing that:
+1. Verifies correct encryption and decryption of messages
+2. Confirms signature creation and verification
+3. Tests the full communication pipeline end-to-end
+4. Measures and reports performance metrics
+5. Validates behavior under various network conditions
+6. Confirms resistance to common attack vectors
+
+## Documentation Requirements
+For each component, provide:
+1. Clear documentation of the implementation approach
+2. Security analysis and justification for design choices
+3. Performance benchmarks and comparisons
+4. Usage instructions and examples
+5. Integration guidelines
+
+## When Given a Task:
+1. First, analyze the requirements and plan your approach
+2. Design the solution with security as the primary concern
+3. Implement the code with clear structure and comments
+4. Include appropriate error handling and logging
+5. Provide testing instructions and expected outcomes
+6. Document security considerations and performance characteristics
+
+Your implementation should prioritize correctness, security, modularity, and maintainability while ensuring the system works efficiently on resource-constrained drone hardware.
+
+The system provides secure communication between a drone and ground control station (GCS) using a combination of classical cryptography and post-quantum cryptography (PQC) algorithms. It supports both pre-quantum and post-quantum algorithms:
+
+### Pre-Quantum (Symmetric) Algorithms - All with 128-bit Keys
+1. **ASCON-128** - NIST Lightweight Crypto Winner (AEAD)
+2. **Camellia-128** - ISO/IEC Standard Block Cipher
+3. **HIGHT** - Korean Lightweight Block Cipher
+4. **PRINTcipher** - Ultra-Lightweight Block Cipher
+
+### Post-Quantum Algorithms - Varying NIST Security Levels
+1. **CRYSTALS-Kyber** - NIST PQC Standard for Key Encapsulation (FIPS 203)
+   - Kyber-512 (Level 1), Kyber-768 (Level 3), Kyber-1024 (Level 5)
+2. **CRYSTALS-Dilithium** - NIST PQC Standard for Digital Signatures (FIPS 204)
+   - Dilithium2 (Level 2), Dilithium3 (Level 3), Dilithium5 (Level 5)
+3. **Falcon** - NIST PQC Round 3 Finalist for Digital Signatures
+   - Falcon-512 (Level 1), Falcon-1024 (Level 5)
+4. **SPHINCS+** - NIST PQC Hash-based Digital Signatures
+   - Multiple variants at Levels 1, 3, and 5
+
+## Architecture
+
+### Proxy-based Design
+- Each algorithm has its own proxy implementation for both drone and GCS
+- Proxies handle cryptographic operations transparently
+- Standard UDP-based communication for command and telemetry flows
+- TCP for key exchange operations
+
+### Port Structure
+- PORT_KEY_EXCHANGE (5800): Used for initial key exchange
+- Command Flow Ports (5810-5812): From GCS to drone
+- Telemetry Flow Ports (5820-5822): From drone to GCS
+
+### Implementation Details
+- All pre-quantum algorithms use 128-bit keys for uniform comparison
+- Post-quantum algorithms are grouped by NIST security level
+- Fallback mechanisms for environments without specialized libraries
+- Support for algorithm switching via external MQTT coordination
+
+## Implementation Files
+
+### Pre-Quantum Algorithms
+- `drone_ascon.py` / `gcs_ascon.py`: ASCON-128 AEAD implementation
+- `drone_camellia.py` / `gcs_camellia.py`: Camellia-128 block cipher
+- `drone_hight.py` / `gcs_hight.py`: HIGHT lightweight cipher
+- `drone_printcipher.py` / `gcs_printcipher.py`: PRINTcipher
+
+### Post-Quantum Algorithms
+- Kyber KEM (per-parameter proxies):
+   - `drone_kyber_512.py` / `gcs_kyber_512.py` (Kyber-512, Level 1)
+   - `drone_kyber_768.py` / `gcs_kyber_768.py` (Kyber-768, Level 3)
+   - `drone_kyber_1024.py` / `gcs_kyber_1024.py` (Kyber-1024, Level 5)
+- Dilithium signatures (per-parameter proxies):
+   - `drone_dilithium2.py` / `gcs_dilithium2.py` (Dilithium2, Level 2)
+   - `drone_dilithium3.py` / `gcs_dilithium3.py` (Dilithium3, Level 3)
+   - `drone_dilithium5.py` / `gcs_dilithium5.py` (Dilithium5, Level 5)
+- Falcon signatures (per-parameter proxies):
+   - `drone_falcon512.py` / `gcs_falcon512.py` (Falcon-512, Level 1)
+   - `drone_falcon1024.py` / `gcs_falcon1024.py` (Falcon-1024, Level 5)
+- SPHINCS+ signatures (per-parameter proxies):
+   - `drone_sphincs_haraka.py` / `gcs_sphincs_haraka.py` (SPHINCS+-Haraka variants)
+   - `drone_sphincs_sha2.py` / `gcs_sphincs_sha2.py` (SPHINCS+-SHA2 variants)
+
+### Configuration Files
+- `drone/ip_config.py`: Network configuration for drone side
+- `gcs/ip_config.py`: Network configuration for GCS side
+
+## Performance Metrics to Capture
+- Power consumption (W)
+- Encryption/decryption time per packet (ms)
+- End-to-end delay (ms)
+- Key/signature sizes
+- Memory usage
+- CPU utilization
+
+## Next Steps
+- Complete implementation of all algorithm proxies
+- Create benchmarking and testing framework
+- Evaluate algorithms under various network conditions
+- Analyze performance metrics and security characteristics
+- Prepare comprehensive documentation and comparative analysis
+
+## System Architecture Requirements
+
+Implement a modular proxy-based architecture where:
+
+1. All cryptographic operations happen in dedicated proxy modules that sit between the main application and the network
+2. Each proxy handles a specific cryptographic algorithm
+3. The system supports both symmetric (pre-quantum) and asymmetric (post-quantum) algorithms
+4. All network configuration is centralized in ip_config.py files
+5. The design follows a clear separation of concerns
+
+## Reference Implementations
+
+The system follows the existing proxy pattern as shown in reference implementations:
+
+1. `gcs_ascon.py` and `drone_ascon.py` demonstrate the ASCON-128 implementation pattern
+2. `gcs_dilithium.py` and `drone_dilithium.py` show how to implement Dilithium signatures
+3. All implementations must follow similar patterns for consistency
+
+## Network Configuration
+
+The system uses specific port configurations as defined in `ip_config.py`:
+
+1. PORT_KEY_EXCHANGE = 5800 - Used for key exchange operations
+2. Command Flow Ports:
+   - PORT_GCS_LISTEN_PLAINTEXT_CMD = 5810 - GCS side listens for plaintext commands
+   - PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811 - Drone side receives encrypted commands
+   - PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812 - Drone forwards decrypted commands
+
+3. Telemetry Flow Ports:
+   - PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5820 - Drone side listens for plaintext telemetry
+   - PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821 - GCS side receives encrypted telemetry
+   - PORT_GCS_FORWARD_DECRYPTED_TLM = 5822 - GCS forwards decrypted telemetry
+
+4. NONCE_IV_SIZE = 12 - Standard size for nonce/IV in symmetric encryption
+
+## Cryptographic Algorithms to Implement
+
+### Pre-Quantum (Symmetric) Algorithms - All with 128-bit Keys
+1. **ASCON-128** - NIST Lightweight Crypto Winner (AEAD)
+   - 128-bit key, 128-bit authentication tag
+   - 12-round permutation with 320-bit state
+   - Throughput: Multi-Gbps in hardware, tens of Mb/s on 32-bit CPU
+   - Footprint: 2-3 KB code size, <10k gate equivalents for hardware
+
+2. **Camellia-128** - ISO/IEC Standard Block Cipher
+   - 128-bit key, 128-bit block size
+   - 18 rounds, Feistel network structure
+   - Performance comparable to AES-128
+   - Standardized in ISO/IEC 18033-3, RFC 3713
+
+3. **HIGHT** - Korean Lightweight Block Cipher
+   - 128-bit key, 64-bit block size
+   - 32 rounds of simple XOR and addition operations
+   - No S-boxes, designed for minimal footprint
+   - Korean standard cipher, proposed for ISO/IEC 29192-2
+
+4. **PRINTcipher** - Ultra-Lightweight Block Cipher
+   - 96-bit block size variant with ~160-bit effective key
+   - Designed for minimal gate count in hardware
+   - Extremely small implementation footprint
+   - Primarily for educational/comparison purposes
+
+### Post-Quantum Algorithms
+1. **CRYSTALS-Kyber** - NIST PQC Standard for Key Encapsulation (FIPS 203)
+   - Kyber-512 (Level 1): ~800 byte public key, ~768 byte ciphertext
+   - Kyber-768 (Level 3): ~1,184 byte public key, ~1,088 byte ciphertext
+   - Kyber-1024 (Level 5): ~1,568 byte public key, ~1,568 byte ciphertext
+   - Uses Module-LWE hardness assumption
+   - Standardized as ML-KEM in FIPS 203
+
+2. **CRYSTALS-Dilithium** - NIST PQC Standard for Digital Signatures (FIPS 204)
+   - Dilithium2 (Level 2): ~1,312 byte public key, ~2,420 byte signature
+   - Dilithium3 (Level 3): ~1,952 byte public key, ~3,293 byte signature
+   - Dilithium5 (Level 5): ~2,592 byte public key, ~4,595 byte signature
+   - Based on Module-LWE and Module-SIS problems
+   - Standardized as ML-DSA in FIPS 204
+
+3. **Falcon** - NIST PQC Round 3 Finalist for Digital Signatures
+   - Falcon-512 (Level 1): ~897 byte public key, ~666 byte signature
+   - Falcon-1024 (Level 5): ~1,793 byte public key, ~1,280 byte signature
+   - Based on NTRU lattice problems
+   - Compact signatures but more complex implementation
+
+4. **SPHINCS+** - NIST PQC Hash-based Digital Signatures
+   - SPHINCS+-128f (Level 1): ~32 byte public key, ~17,088 byte signature
+   - SPHINCS+-128s (Level 1): ~32 byte public key, ~7,856 byte signature
+   - SPHINCS+-256f (Level 5): ~64 byte public key, ~49,856 byte signature
+   - SPHINCS+-256s (Level 5): ~64 byte public key, ~29,792 byte signature
+   - Hash-based, more conservative security assumptions
+   - Stateless signatures with larger size but simpler implementation
+
+## Implementation Details
+
+### For Each Algorithm, Create:
+1. A drone-side proxy implementation (`drone_[algorithm].py`)
+2. A GCS-side proxy implementation (`gcs_[algorithm].py`)
+3. Appropriate fallback mechanisms when specialized libraries aren't available
+4. Comprehensive error handling and logging
+
+### Communication Flows:
+1. Command Flow (GCS → Drone):
+   - GCS application sends plaintext commands to local proxy
+   - GCS proxy encrypts and signs commands
+   - Drone proxy verifies signatures and decrypts commands
+   - Drone proxy forwards plaintext commands to flight controller
+
+2. Telemetry Flow (Drone → GCS):
+   - Drone flight controller sends plaintext telemetry to local proxy
+   - Drone proxy encrypts and signs telemetry
+   - GCS proxy verifies signatures and decrypts telemetry
+   - GCS proxy forwards plaintext telemetry to GCS application
+
+### Threading Model:
+- Each proxy uses two threads:
+  1. One for receiving and processing incoming messages
+  2. One for encrypting and sending outgoing messages
+- All threads should be daemon threads with appropriate exception handling
+
+## Key Exchange Protocol
+Implement a secure key exchange protocol that:
+1. Uses Kyber for post-quantum secure key encapsulation
+2. Establishes symmetric keys for bulk encryption
+3. Distributes public keys for signature verification
+4. Provides forward secrecy where possible
+5. Includes appropriate authentication measures
+
+## Performance Monitoring and Measurement
+Include monitoring capabilities for:
+1. Power consumption estimation: 
+   - All algorithms should report estimated power draw
+   - Note that network I/O typically dominates (85-90% of total power)
+   - Actual cryptographic operations contribute only 10-15% of power usage
+
+2. Processing time measurements:
+   - Time per encryption/decryption operation
+   - Time per signature generation/verification
+   - End-to-end latency for complete message flow
+
+3. Memory usage tracking:
+   - Peak memory usage during cryptographic operations
+   - Static memory footprint of each implementation
+
+4. Size metrics:
+   - Key sizes
+   - Signature sizes
+   - Ciphertext expansion
+
+5. Network metrics:
+   - Packet latency
+   - Throughput
+
+## Testing & Validation
+Implement testing that:
+1. Verifies correct encryption and decryption of messages
+2. Confirms signature creation and verification
+3. Tests the full communication pipeline end-to-end
+4. Measures and reports performance metrics
+5. Validates behavior under various network conditions
+6. Confirms resistance to common attack vectors
+
+## Documentation Requirements
+For each component, provide:
+1. Clear documentation of the implementation approach
+2. Security analysis and justification for design choices
+3. Performance benchmarks and comparisons
+4. Usage instructions and examples
+5. Integration guidelines
+
+## Performance Comparison Tables
+
+Include tables similar to these for all implemented algorithms:
+
+### Table 1: Lightweight Ciphers (128-bit key) Comparative Metrics
+| Algorithm | Type | Block/State | Rounds | Latency (cycles/block) | Throughput (Mb/s) | Memory/Area Footprint | Power Efficiency |
+|-----------|------|-------------|--------|------------------------|-------------------|------------------------|------------------|
+| ASCON-128 | AEAD | 320-bit state | 12 | Low | High (multi-Gbps in HW) | Small (2-3 KB) | High |
+| Camellia-128 | Block cipher | 128-bit block | 18 | Moderate | Moderate | Medium (~4 KB) | Medium |
+| HIGHT | Block cipher | 64-bit block | 32 | Moderate-Low | Moderate | Very small (~2 KB) | High |
+| PRINTcipher-96 | Block cipher | 96-bit block | 48 | High | Low | Tiny HW (~1k GE) | High (HW) |
+
+### Table 2: Post-Quantum KEM Comparison (Kyber)
+| Parameter Set | Security Level | Public Key Size (bytes) | Ciphertext Size (bytes) | Secret Key Size (bytes) | Encaps. Time (ms) | Decaps. Time (ms) |
+|---------------|----------------|-------------------------|-------------------------|-------------------------|-------------------|-------------------|
+| Kyber-512 | Level 1 | ~800 | ~768 | ~1,632 | x.xx | x.xx |
+| Kyber-768 | Level 3 | ~1,184 | ~1,088 | ~2,400 | x.xx | x.xx |
+| Kyber-1024 | Level 5 | ~1,568 | ~1,568 | ~3,168 | x.xx | x.xx |
+
+### Table 3: Post-Quantum Signature Comparison
+| Algorithm | Security Level | Public Key Size (bytes) | Signature Size (bytes) | Secret Key Size (bytes) | Sign Time (ms) | Verify Time (ms) |
+|-----------|----------------|-------------------------|------------------------|-------------------------|----------------|------------------|
+| Dilithium2 | Level 2 | ~1,312 | ~2,420 | ~2,528 | x.xx | x.xx |
+| Dilithium3 | Level 3 | ~1,952 | ~3,293 | ~4,000 | x.xx | x.xx |
+| Dilithium5 | Level 5 | ~2,592 | ~4,595 | ~4,864 | x.xx | x.xx |
+| Falcon-512 | Level 1 | ~897 | ~666 | ~1,281 | x.xx | x.xx |
+| Falcon-1024 | Level 5 | ~1,793 | ~1,280 | ~2,305 | x.xx | x.xx |
+| SPHINCS+-128s | Level 1 | ~32 | ~7,856 | ~64 | x.xx | x.xx |
+| SPHINCS+-256s | Level 5 | ~64 | ~29,792 | ~128 | x.xx | x.xx |
+
+## When Given a Task:
+1. First, analyze the requirements and plan your approach
+2. Design the solution with security as the primary concern
+3. Implement the code with clear structure and comments
+4. Include appropriate error handling and logging
+5. Provide testing instructions and expected outcomes
+6. Document security considerations and performance characteristics
+
+Your implementation should prioritize correctness, security, modularity, and maintainability while ensuring the system works efficiently on resource-constrained drone hardware (typically a Raspberry Pi 4 companion computer).
+referecces scripts---------
+---------------------drone ip config------------------
+# ==============================================================================
+# ip_config.py (Drone Version)
+#
+# PURPOSE:
+#   Centralized IP and Port Configuration for the GCS and Drone framework.
+#   This copy lives under drone/ so you can deploy the Drone folder standalone.
+#   Edit ONLY this file on the Drone (Raspberry Pi) to change addresses/ports.
+#   All Drone scripts import from here for consistency.
+#
+# INITIAL SETUP:
+#   All hosts are set to "127.0.0.1" (localhost) for easy testing of all
+#   components on a single machine.
+#
+# DEPLOYMENT:
+#   When deploying to a real network, change GCS_HOST and DRONE_HOST to the
+#   actual IP addresses of your machines.
+#   NOTE: Keep gcs/ip_config.py and drone/ip_config.py in sync or set them
+#   appropriately for each side.
+# ==============================================================================
+
+# --- HOST ADDRESSES ---
+# Change these when you move from local testing to a real network.
+GCS_HOST = "192.168.0.102"    # The primary IP address of the GCS machine (also used as MQTT broker host).
+DRONE_HOST = "192.168.0.101"  # The primary IP address of the Drone machine.
+
+# --- DRONE ID ---
+# Stable identifier for this drone used in MQTT topics and certificate filenames.
+# Example cert files: <DRONE_ID>-cert.pem and <DRONE_ID>-key.pem
+DRONE_ID = "drone1"
+
+# --- NETWORK PORTS ---
+# A new, clean set of ports to avoid conflicts with old scripts.
+
+# Port for PQC Key Exchange (Kyber public keys, signatures, etc.)
+PORT_KEY_EXCHANGE = 5800
+
+# Ports for MAVLink Command Flow (GCS App -> Drone)
+# 1. GCS App sends plaintext MAVLink to this local port.
+PORT_GCS_LISTEN_PLAINTEXT_CMD = 5810
+# 2. Drone's crypto proxy listens for encrypted commands on this port.
+PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811
+# 3. Drone's crypto proxy forwards decrypted commands to the flight controller on this local port.
+PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812
+
+# Ports for MAVLink Telemetry Flow (Drone -> GCS App)
+# 1. Drone's flight controller sends plaintext MAVLink to this local port.
+PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5820
+# 2. GCS crypto proxy listens for encrypted telemetry on this port.
+PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821
+# 3. GCS crypto proxy forwards decrypted telemetry to the GCS application on this local port.
+PORT_GCS_FORWARD_DECRYPTED_TLM = 5822
+
+# --- CRYPTOGRAPHY CONSTANTS ---
+# Standard size for Nonce/IV in bytes for AES-GCM, ASCON, and CBC modes.
+NONCE_IV_SIZE = 12
+
+# --- RUNTIME/PERSISTENT UPDATE HELPERS (for Scheduler UI) ---
+# Runtime updates affect this module in-memory only (callers already imported it).
+# Persistent updates modify this file on disk by replacing the lines for GCS_HOST/DRONE_HOST.
+from typing import Optional, List
+import re, time
+
+def set_hosts_runtime(new_gcs: Optional[str]=None, new_drone: Optional[str]=None) -> List[str]:
+	changed=[]
+	global GCS_HOST, DRONE_HOST
+	if new_gcs and new_gcs != GCS_HOST:
+		GCS_HOST = new_gcs; changed.append(f"GCS_HOST->{new_gcs}")
+	if new_drone and new_drone != DRONE_HOST:
+		DRONE_HOST = new_drone; changed.append(f"DRONE_HOST->{new_drone}")
+	return changed
+
+def update_hosts_persistent(new_gcs: Optional[str]=None, new_drone: Optional[str]=None) -> List[str]:
+	"""Edit this ip_config.py to persist new host values. Returns list of changes applied."""
+	path = __file__
+	try:
+		with open(path, 'r', encoding='utf-8') as f:
+			content = f.read()
+		changes=[]
+		def repl_line(src:str, key:str, val:Optional[str]) -> str:
+			nonlocal changes
+			if not val: return src
+			pattern = rf"^(\s*{key}\s*=\s*)\"[^\"]*\""
+			ts = time.strftime('%Y-%m-%d %H:%M:%S')
+			new_src, n = re.subn(pattern, rf"# updated {ts} \g<0>\n{key} = \"{val}\"", src, count=1, flags=re.MULTILINE)
+			if n:
+				changes.append(f"{key}->{val}")
+				return new_src
+			return src
+		content2 = repl_line(content, 'GCS_HOST', new_gcs)
+		content3 = repl_line(content2, 'DRONE_HOST', new_drone)
+		if content3 != content:
+			with open(path, 'w', encoding='utf-8') as f:
+				f.write(content3)
+		return changes
+	except Exception:
+		return []
+-----------------------gcs_ip config--------------------
+# ==============================================================================
+# ip_config.py (GCS Version)
+#
+# PURPOSE:
+#   Centralized IP and Port Configuration for the GCS and Drone framework.
+#   This configuration matches the research paper implementation exactly:
+#   - Port Range: 5800-5822 (standardized across GCS/Drone)
+#   - Algorithm mapping: c1-c8 as specified in paper
+#   - UDP proxy pattern for fair power comparison
+#
+# RESEARCH PAPER COMPLIANCE:
+#   ✅ All hosts set for network deployment
+#   ✅ Port architecture: 5800-5822 as documented
+#   ✅ Supports 8 algorithms (c1-c8) with uniform testing
+# ==============================================================================
+
+# --- HOST ADDRESSES ---
+# Updated 2023-09-13 GCS_HOST = "192.168.0.104"
+GCS_HOST = "192.168.0.104"    # The primary IP address of the GCS machine.
+# Updated 2023-09-13 DRONE_HOST = "192.168.0.101" 
+DRONE_HOST = "192.168.0.101"  # The primary IP address of the Drone machine.
+
+# --- DRONE ID ---
+DRONE_ID = "drone1"
+
+# --- NETWORK PORTS (Research Paper Specification) ---
+# Port Range: 5800-5822 (standardized for algorithm comparison)
+
+# Port for PQC Key Exchange (algorithms c5-c8)
+PORT_KEY_EXCHANGE = 5800
+
+# Ports for MAVLink Command Flow (GCS App -> Drone)
+PORT_GCS_LISTEN_PLAINTEXT_CMD = 5810    # GCS app sends here
+PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811  # Drone proxy receives  
+PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812 # To flight controller
+
+# Ports for MAVLink Telemetry Flow (Drone -> GCS App)
+PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5820  # From flight controller
+PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821    # GCS proxy receives
+PORT_GCS_FORWARD_DECRYPTED_TLM = 5822   # To GCS app
+
+# --- CRYPTOGRAPHY CONSTANTS ---
+NONCE_IV_SIZE = 12
+
+# --- ALGORITHM MAPPING (Research Paper c1-c8) ---
+ALGORITHM_MAP = {
+    "c1": "ascon",      # ASCON-128 AEAD (NIST SP 800-232)
+    "c2": "speck",      # SPECK-128/128 (NSA lightweight)
+    "c3": "camellia",   # Camellia-128 (ISO standard)
+    "c4": "hight",      # HIGHT (Korean standard)
+    "c5": "dilithium",  # Dilithium (NIST FIPS 204)
+    "c6": "kyber",      # Kyber (NIST FIPS 203)
+    "c7": "sphincs",    # SPHINCS+ (NIST Round 3)
+    "c8": "falcon"      # Falcon (NIST Round 3)
+}
+
+# --- RUNTIME/PERSISTENT UPDATE HELPERS (for Scheduler UI) ---
+# Runtime updates affect this module in-memory only (callers already imported it).
+# Persistent updates modify this file on disk by replacing the lines for GCS_HOST/DRONE_HOST.
+from typing import Optional, List
+import re, time
+
+def set_hosts_runtime(new_gcs: Optional[str]=None, new_drone: Optional[str]=None) -> List[str]:
+	changed=[]
+	global GCS_HOST, DRONE_HOST
+	if new_gcs and new_gcs != GCS_HOST:
+		GCS_HOST = new_gcs; changed.append(f"GCS_HOST->{new_gcs}")
+	if new_drone and new_drone != DRONE_HOST:
+		DRONE_HOST = new_drone; changed.append(f"DRONE_HOST->{new_drone}")
+	return changed
+
+def update_hosts_persistent(new_gcs: Optional[str]=None, new_drone: Optional[str]=None) -> List[str]:
+	"""Edit this ip_config.py to persist new host values. Returns list of changes applied."""
+	path = __file__
+	try:
+		with open(path, 'r', encoding='utf-8') as f:
+			content = f.read()
+		changes=[]
+		def repl_line(src:str, key:str, val:Optional[str]) -> str:
+			nonlocal changes
+			if not val: return src
+			pattern = rf"^(\s*{key}\s*=\s*)\"[^\"]*\""
+			ts = time.strftime('%Y-%m-%d %H:%M:%S')
+			new_src, n = re.subn(pattern, rf"# updated {ts} \g<0>\n{key} = \"{val}\"", src, count=1, flags=re.MULTILINE)
+			if n:
+				changes.append(f"{key}->{val}")
+				return new_src
+			return src
+		content2 = repl_line(content, 'GCS_HOST', new_gcs)
+		content3 = repl_line(content2, 'DRONE_HOST', new_drone)
+		if content3 != content:
+			with open(path, 'w', encoding='utf-8') as f:
+				f.write(content3)
+		return changes
+	except Exception:
+		return []
+------------------------example implementation in droene kyber-----------------
+# ==============================================================================
+# drone_kyber.py
+#
+# Drone-Side Proxy for Post-Quantum Key Exchange using ML-KEM (Kyber)
+# ==============================================================================
+
+import socket
+import threading
+import os
+import time
+try:
+    import oqs.oqs as oqs
+    USING_LIBOQS = True
+except ImportError:
+    print("[WARNING] liboqs not found, falling back to RSA key exchange")
+    from cryptography.hazmat.primitives.asymmetric import rsa, padding
+    from cryptography.hazmat.primitives import serialization, hashes
+    import hashlib
+    USING_LIBOQS = False
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from ip_config import *
+
+print("[KYBER Drone] Starting Key Exchange (ML-KEM-768)...")
+
+if USING_LIBOQS:
+    kem = oqs.KeyEncapsulation("ML-KEM-768")
+
+    ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            ex_sock.connect((GCS_HOST, PORT_KEY_EXCHANGE))
+            break
+        except ConnectionRefusedError:
+            print("[KYBER Drone] GCS not ready, retry in 2s...")
+            time.sleep(2)
+
+    print(f"[KYBER Drone] Connected to {GCS_HOST}:{PORT_KEY_EXCHANGE}")
+    gcs_public_key = ex_sock.recv(65536)
+    ciphertext, shared_secret = kem.encap_secret(gcs_public_key)
+    ex_sock.sendall(ciphertext)
+    AES_KEY = shared_secret[:32]
+    ex_sock.close()
+else:
+    shared_secret = os.urandom(32)
+    ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            ex_sock.connect((GCS_HOST, PORT_KEY_EXCHANGE))
+            break
+        except ConnectionRefusedError:
+            print("[KYBER Drone] GCS not ready, retry in 2s...")
+            time.sleep(2)
+
+    print(f"[KYBER Drone] Connected to {GCS_HOST}:{PORT_KEY_EXCHANGE}")
+    pem_public_key = ex_sock.recv(65536)
+    gcs_public_key = serialization.load_pem_public_key(pem_public_key)
+    encrypted_shared_secret = gcs_public_key.encrypt(
+        shared_secret,
+        padding.OAEP(mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None),
+    )
+    ex_sock.sendall(encrypted_shared_secret)
+    AES_KEY = hashlib.sha256(shared_secret).digest()
+    ex_sock.close()
+
+aesgcm = AESGCM(AES_KEY)
+print("✅ [KYBER Drone] Shared key established")
+
+
+def encrypt_message(plaintext: bytes) -> bytes:
+    nonce = os.urandom(NONCE_IV_SIZE)
+    ct = aesgcm.encrypt(nonce, plaintext, None)
+    return nonce + ct
+
+
+def decrypt_message(encrypted_message: bytes):
+    try:
+        nonce = encrypted_message[:NONCE_IV_SIZE]
+        ct = encrypted_message[NONCE_IV_SIZE:]
+        return aesgcm.decrypt(nonce, ct, None)
+    except Exception as e:
+        print(f"[KYBER Drone] Decryption failed: {e}")
+        return None
+
+
+def telemetry_to_gcs_thread():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    print(f"[KYBER Drone] Listening plaintext TLM on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM}")
+    while True:
+        data, _ = sock.recvfrom(4096)
+        enc = encrypt_message(data)
+        sock.sendto(enc, (GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+
+
+def commands_from_gcs_thread():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    print(f"[KYBER Drone] Listening encrypted CMD on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD}")
+    while True:
+        data, _ = sock.recvfrom(4096)
+        pt = decrypt_message(data)
+        if pt:
+            sock.sendto(pt, (DRONE_HOST, PORT_DRONE_FORWARD_DECRYPTED_CMD))
+
+
+if __name__ == "__main__":
+    print("--- DRONE KYBER (ML-KEM-768) PROXY ---")
+    t1 = threading.Thread(target=telemetry_to_gcs_thread, daemon=True)
+    t2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+-------------------------gcss-kyber as a reference ------------------
+# ==============================================================================
+# gcs_kyber.py
+#
+# GCS-Side Proxy for Post-Quantum Key Exchange using ML-KEM (Kyber)
+#
+# METHOD:
+#   1) Perform a Kyber (ML-KEM-768) key exchange over TCP to derive a shared key.
+#   2) Use AES-256-GCM with the derived key for UDP MAVLink streams.
+# ==============================================================================
+
+import socket
+import threading
+import os
+try:
+    import oqs.oqs as oqs
+    USING_LIBOQS = True
+except ImportError:
+    print("[WARNING] liboqs not found, falling back to RSA key exchange")
+    from cryptography.hazmat.primitives.asymmetric import rsa, padding
+    from cryptography.hazmat.primitives import serialization, hashes
+    import hashlib
+    USING_LIBOQS = False
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from ip_config import *
+
+print("[KYBER GCS] Starting Key Exchange (ML-KEM-768)...")
+
+if USING_LIBOQS:
+    kem = oqs.KeyEncapsulation("ML-KEM-768")
+    gcs_public_key = kem.generate_keypair()
+
+    ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ex_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    ex_sock.listen(1)
+    print(f"[KYBER GCS] Waiting on {GCS_HOST}:{PORT_KEY_EXCHANGE}...")
+    conn, addr = ex_sock.accept()
+    print(f"[KYBER GCS] Drone connected from {addr}")
+
+    conn.sendall(gcs_public_key)
+    ciphertext = conn.recv(65536)
+    shared_secret = kem.decap_secret(ciphertext)
+    AES_KEY = shared_secret[:32]
+else:
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public_key = private_key.public_key()
+    pem_public_key = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ex_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    ex_sock.listen(1)
+    print(f"[KYBER GCS] Waiting on {GCS_HOST}:{PORT_KEY_EXCHANGE} (RSA fallback)...")
+    conn, addr = ex_sock.accept()
+    print(f"[KYBER GCS] Drone connected from {addr}")
+    conn.sendall(pem_public_key)
+    encrypted_shared_secret = conn.recv(65536)
+    shared_secret = private_key.decrypt(
+        encrypted_shared_secret,
+        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None),
+    )
+    AES_KEY = hashlib.sha256(shared_secret).digest()
+
+aesgcm = AESGCM(AES_KEY)
+print("✅ [KYBER GCS] Shared key established")
+conn.close()
+ex_sock.close()
+
+
+def encrypt_message(plaintext: bytes) -> bytes:
+    nonce = os.urandom(NONCE_IV_SIZE)
+    ct = aesgcm.encrypt(nonce, plaintext, None)
+    return nonce + ct
+
+
+def decrypt_message(encrypted_message: bytes):
+    try:
+        nonce = encrypted_message[:NONCE_IV_SIZE]
+        ct = encrypted_message[NONCE_IV_SIZE:]
+        return aesgcm.decrypt(nonce, ct, None)
+    except Exception as e:
+        print(f"[KYBER GCS] Decryption failed: {e}")
+        return None
+
+
+def drone_to_gcs_thread():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    print(f"[KYBER GCS] Listening encrypted TLM on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM}")
+    while True:
+        data, _ = sock.recvfrom(4096)
+        pt = decrypt_message(data)
+        if pt:
+            sock.sendto(pt, (GCS_HOST, PORT_GCS_FORWARD_DECRYPTED_TLM))
+
+
+def gcs_to_drone_thread():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    print(f"[KYBER GCS] Listening plaintext CMD on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD}")
+    while True:
+        data, _ = sock.recvfrom(4096)
+        enc = encrypt_message(data)
+        sock.sendto(enc, (DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+
+
+if __name__ == "__main__":
+    print("--- GCS KYBER (ML-KEM-768) PROXY ---")
+    t1 = threading.Thread(target=drone_to_gcs_thread, daemon=True)
+    t2 = threading.Thread(target=gcs_to_drone_thread, daemon=True)
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+
+---------------------------------------------
+strictly use liboqds ------
+no bluff no more things just do what need to be document-------------
+--------------------------------
+prepare a progress.txt and the text file which tracks the progresss and the 
+brackets to tick what we have dore and what neeed to do as a planner anrd then the prepareation for the implemerntation 
+------------------------------
+strictly align to things i said 
+i have a virtual envireonment managed by conda -----------
+(gcs-env) PS C:\Users\burak\Desktop\crypto> conda list
+# packages in environment at C:\Users\burak\miniconda3\envs\gcs-env:
+#
+# Name                           Version                Build                  Channel
+_libavif_api                     1.3.0                  h57928b3_2             conda-forge
+_python_abi3_support             1.0                    hd8ed1ab_2             conda-forge
+anyio                            4.10.0                 pyhe01879c_0           conda-forge
+aom                              3.9.1                  he0c23c2_0             conda-forge
+argon2-cffi                      25.1.0                 pyhd8ed1ab_0           conda-forge
+argon2-cffi-bindings             25.1.0                 py313h5ea7bf4_0        conda-forge
+arrow                            1.3.0                  pyhd8ed1ab_1           conda-forge
+ascon                            0.0.9                  pypi_0                 pypi
+asttokens                        3.0.0                  pyhd8ed1ab_1           conda-forge
+async-lru                        2.0.5                  pyh29332c3_0           conda-forge
+attrs                            25.3.0                 pyh71513ae_0           conda-forge
+babel                            2.17.0                 pyhd8ed1ab_0           conda-forge
+beautifulsoup4                   4.13.5                 pyha770c72_0           conda-forge
+black                            25.1.0                 pypi_0                 pypi
+bleach                           6.2.0                  pyh29332c3_4           conda-forge
+bleach-with-css                  6.2.0                  h82add2a_4             conda-forge
+brotli                           1.1.0                  h2466b09_3             conda-forge
+brotli-bin                       1.1.0                  h2466b09_3             conda-forge
+brotli-python                    1.1.0                  py313h5813708_3        conda-forge
+bzip2                            1.0.8                  h2bbff1b_6 
+ca-certificates                  2025.8.3               h4c7d964_0             conda-forge
+cached-property                  1.5.2                  hd8ed1ab_1             conda-forge
+cached_property                  1.5.2                  pyha770c72_1           conda-forge
+cairo                            1.18.4                 he9e932c_0 
+certifi                          2025.8.3               pyhd8ed1ab_0           conda-forge
+cffi                             1.17.1                 py313ha7868ed_0        conda-forge
+charset-normalizer               3.4.3                  pyhd8ed1ab_0           conda-forge
+click                            8.2.1                  pypi_0                 pypi
+cloudpickle                      3.1.1                  pypi_0                 pypi
+cmake                            3.27.4                 h1537add_0             conda-forge
+colorama                         0.4.6                  pyhd8ed1ab_1           conda-forge
+comm                             0.2.3                  pyhe01879c_0           conda-forge
+contourpy                        1.3.3                  py313hf069bd2_1        conda-forge
+cpython                          3.13.5                 py313hd8ed1ab_102      conda-forge
+cryptography                     45.0.6                 py313h392ebe0_0        conda-forge
+cycler                           0.12.1                 pyhd8ed1ab_1           conda-forge
+dav1d                            1.2.1                  hcfcfb64_0             conda-forge
+debugpy                          1.8.16                 py313h927ade5_0        conda-forge
+decorator                        5.2.1                  pyhd8ed1ab_0           conda-forge
+defusedxml                       0.7.1                  pyhd8ed1ab_0           conda-forge
+exceptiongroup                   1.3.0                  pyhd8ed1ab_0           conda-forge
+executing                        2.2.0                  pyhd8ed1ab_0           conda-forge
+expat                            2.7.1                  h8ddb27b_0 
+farama-notifications             0.0.4                  pypi_0                 pypi
+fastcrc                          0.3.2                  pypi_0                 pypi
+filelock                         3.13.1                 pypi_0                 pypi
+flake8                           7.3.0                  pypi_0                 pypi
+fontconfig                       2.14.1                 hb33846d_3 
+fonttools                        4.59.1                 py313hd650c13_0        conda-forge
+fqdn                             1.5.1                  pyhd8ed1ab_1           conda-forge
+freeglut                         3.4.0                  h8a1e904_1 
+freetype                         2.13.3                 h0620614_0 
+fribidi                          1.0.10                 h8d14728_0             conda-forge
+fsspec                           2024.6.1               pypi_0                 pypi
+graphite2                        1.3.14                 hac47afa_2             conda-forge
+gymnasium                        1.2.0                  pypi_0                 pypi
+h11                              0.16.0                 pyhd8ed1ab_0           conda-forge
+h2                               4.2.0                  pyhd8ed1ab_0           conda-forge
+harfbuzz                         10.2.0                 he2f9f60_1 
+hpack                            4.1.0                  pyhd8ed1ab_0           conda-forge
+httpcore                         1.0.9                  pyh29332c3_0           conda-forge
+httpx                            0.28.1                 pyhd8ed1ab_0           conda-forge
+hyperframe                       6.1.0                  pyhd8ed1ab_0           conda-forge
+icu                              73.2                   h63175ca_0             conda-forge
+idna                             3.10                   pyhd8ed1ab_1           conda-forge
+importlib-metadata               8.7.0                  pyhe01879c_1           conda-forge
+iniconfig                        2.1.0                  pypi_0                 pypi
+ipykernel                        6.30.1                 pyh3521513_0           conda-forge
+ipython                          9.4.0                  pyh6be1c34_0           conda-forge
+ipython_pygments_lexers          1.1.1                  pyhd8ed1ab_0           conda-forge
+ipywidgets                       8.1.7                  pyhd8ed1ab_0           conda-forge
+isoduration                      20.11.0                pyhd8ed1ab_1           conda-forge
+jedi                             0.19.2                 pyhd8ed1ab_1           conda-forge
+jinja2                           3.1.6                  pyhd8ed1ab_0           conda-forge
+jpeg                             9e                     hcfcfb64_3             conda-forge
+json5                            0.12.1                 pyhd8ed1ab_0           conda-forge
+jsonpointer                      3.0.0                  py313hfa70ccb_1        conda-forge
+jsonschema                       4.25.1                 pyhe01879c_0           conda-forge
+jsonschema-specifications        2025.4.1               pyh29332c3_0           conda-forge
+jsonschema-with-format-nongpl    4.25.1                 he01879c_0             conda-forge
+jupyter                          1.1.1                  pyhd8ed1ab_1           conda-forge
+jupyter-lsp                      2.2.6                  pyhe01879c_0           conda-forge
+jupyter_client                   8.6.3                  pyhd8ed1ab_1           conda-forge
+jupyter_console                  6.6.3                  pyhd8ed1ab_1           conda-forge
+jupyter_core                     5.8.1                  pyh5737063_0           conda-forge
+jupyter_events                   0.12.0                 pyh29332c3_0           conda-forge
+jupyter_server                   2.17.0                 pyhcf101f3_0           conda-forge
+jupyter_server_terminals         0.5.3                  pyhd8ed1ab_1           conda-forge
+jupyterlab                       4.4.6                  pyhd8ed1ab_0           conda-forge
+jupyterlab_pygments              0.3.0                  pyhd8ed1ab_2           conda-forge
+jupyterlab_server                2.27.3                 pyhd8ed1ab_1           conda-forge
+jupyterlab_widgets               3.0.15                 pyhd8ed1ab_0           conda-forge
+kiwisolver                       1.4.9                  py313h1a38498_0        conda-forge
+krb5                             1.21.3                 hdf4eb48_0             conda-forge
+lark                             1.2.2                  pyhd8ed1ab_1           conda-forge
+lcms2                            2.16                   h62be587_1 
+lerc                             4.0.0                  h6470a55_1             conda-forge
+libavif                          1.3.0                  he916da2_2             conda-forge
+libavif16                        1.3.0                  he916da2_2             conda-forge
+libblas                          3.9.0                  34_h5709861_mkl        conda-forge
+libbrotlicommon                  1.1.0                  h2466b09_3             conda-forge
+libbrotlidec                     1.1.0                  h2466b09_3             conda-forge
+libbrotlienc                     1.1.0                  h2466b09_3             conda-forge
+libcblas                         3.9.0                  34_h2a3cdd5_mkl        conda-forge
+libdeflate                       1.22                   h2466b09_0             conda-forge
+libffi                           3.4.4                  hd77b12b_1 
+libglib                          2.84.2                 h405b238_0 
+libhwloc                         2.12.1                 default_h88281d1_1000  conda-forge
+libiconv                         1.18                   hc1393d2_2             conda-forge
+libkrb5                          1.21.3                 h885b0b7_4 
+liblapack                        3.9.0                  34_hf9ab0e9_mkl        conda-forge
+libmpdec                         4.0.0                  h827c3e9_0 
+liboqs-python                    0.14.0                 pypi_0                 pypi
+libpng                           1.6.39                 h8cc25b3_0 
+libpq                            17.4                   h4a159e6_2 
+libsodium                        1.0.20                 hc70643c_0             conda-forge
+libtiff                          4.7.0                  h404307b_0 
+libwebp-base                     1.6.0                  h4d5522a_0             conda-forge
+libwinpthread                    12.0.0.r4.gg4f2fc60ca  h57928b3_9             conda-forge
+libxml2                          2.13.8                 h866ff63_0 
+libxslt                          1.1.43                 h25c3957_0             conda-forge
+llvm-openmp                      20.1.8                 hfa2b4ca_2             conda-forge
+lxml                             5.3.0                  py313h395c83e_1
+lz4-c                            1.9.4                  hcfcfb64_0             conda-forge
+markupsafe                       3.0.2                  py313hb4c8b1a_1        conda-forge
+matplotlib                       3.10.0                 py313haa95532_1
+matplotlib-base                  3.10.0                 py313h81b4f16_0        conda-forge
+matplotlib-inline                0.1.7                  pyhd8ed1ab_1           conda-forge
+mccabe                           0.7.0                  pypi_0                 pypi
+mistune                          3.1.3                  pyh29332c3_0           conda-forge
+mkl                              2024.2.2               h57928b3_16            conda-forge
+mpmath                           1.3.0                  pypi_0                 pypi
+munkres                          1.1.4                  pyhd8ed1ab_1           conda-forge
+mypy                             1.18.1                 pypi_0                 pypi
+mypy-extensions                  1.1.0                  pypi_0                 pypi
+nbclient                         0.10.2                 pyhd8ed1ab_0           conda-forge
+nbconvert-core                   7.16.6                 pyh29332c3_0           conda-forge
+nbformat                         5.10.4                 pyhd8ed1ab_1           conda-forge
+nest-asyncio                     1.6.0                  pyhd8ed1ab_1           conda-forge
+networkx                         3.3                    pypi_0                 pypi
+ninja                            1.13.1                 h477610d_0             conda-forge
+notebook                         7.4.5                  pyhd8ed1ab_0           conda-forge
+notebook-shim                    0.2.4                  pyhd8ed1ab_1           conda-forge
+ntplib                           0.4.0                  pypi_0                 pypi
+numpy                            2.3.2                  py313ha14762d_1        conda-forge
+openjpeg                         2.5.2                  h9b5d1b5_1 
+openssl                          3.5.2                  h725018a_0             conda-forge
+overrides                        7.7.0                  pyhd8ed1ab_1           conda-forge
+packaging                        25.0                   pyh29332c3_1           conda-forge
+paho-mqtt                        2.1.0                  pypi_0                 pypi
+pandas                           2.3.2                  py313hc90dcd4_0        conda-forge
+pandocfilters                    1.5.0                  pyhd8ed1ab_0           conda-forge
+parso                            0.8.5                  pyhcf101f3_0           conda-forge
+pathspec                         0.12.1                 pypi_0                 pypi
+pcre2                            10.42                  h0ff8eda_1 
+pep272-encryption                0.4                    pypi_0                 pypi
+pickleshare                      0.7.5                  pyhd8ed1ab_1004        conda-forge
+pillow                           11.3.0                 py313hb328d1f_0
+pip                              25.1                   pyhc872135_2
+pixman                           0.46.4                 h5112557_1             conda-forge
+platformdirs                     4.3.8                  pyhe01879c_0           conda-forge
+pluggy                           1.6.0                  pypi_0                 pypi
+ply                              3.11                   pyhd8ed1ab_3           conda-forge
+prometheus_client                0.22.1                 pyhd8ed1ab_0           conda-forge
+prompt-toolkit                   3.0.51                 pyha770c72_0           conda-forge
+prompt_toolkit                   3.0.51                 hd8ed1ab_0             conda-forge
+psutil                           7.0.0                  py313h5ea7bf4_1        conda-forge
+pure_eval                        0.2.3                  pyhd8ed1ab_1           conda-forge
+pycodestyle                      2.14.0                 pypi_0                 pypi
+pycparser                        2.22                   pyh29332c3_1           conda-forge
+pycryptodome                     3.23.0                 pypi_0                 pypi
+pyflakes                         3.4.0                  pypi_0                 pypi
+pygments                         2.19.2                 pyhd8ed1ab_0           conda-forge
+pymavlink                        2.4.49                 pypi_0                 pypi
+pyparsing                        3.2.3                  pyhe01879c_2           conda-forge
+pyqt                             6.7.1                  py313h378bd72_2
+pyqt6-sip                        13.9.1                 py313h02ab6af_2
+pysocks                          1.7.1                  pyh09c184e_7           conda-forge
+pytest                           8.4.2                  pypi_0                 pypi
+python                           3.13.5                 h286a616_100_cp313
+python-camellia                  1.0                    pypi_0                 pypi
+python-dateutil                  2.9.0.post0            pyhe01879c_2           conda-forge
+python-fastjsonschema            2.21.2                 pyhe01879c_0           conda-forge
+python-gil                       3.13.5                 h4df99d1_102           conda-forge
+python-json-logger               2.0.7                  pyhd8ed1ab_0           conda-forge
+python-tzdata                    2025.2                 pyhd8ed1ab_0           conda-forge
+python_abi                       3.13                   0_cp313    
+pytz                             2025.2                 pyhd8ed1ab_0           conda-forge
+pywin32                          311                    py313h40c08fc_0        conda-forge
+pywinpty                         2.0.15                 py313h5813708_0        conda-forge
+pyyaml                           6.0.2                  py313hb4c8b1a_2        conda-forge
+pyzmq                            27.0.2                 py312hbb5da91_2        conda-forge
+qhull                            2020.2                 hc790b64_5             conda-forge
+qtbase                           6.7.3                  hd088775_4 
+qtdeclarative                    6.7.3                  h885b0b7_1 
+qtsvg                            6.7.3                  h9d4b640_1 
+qttools                          6.7.3                  hcb596f7_1 
+qtwebchannel                     6.7.3                  h885b0b7_1 
+qtwebsockets                     6.7.3                  h885b0b7_1 
+rav1e                            0.7.1                  ha073cba_3             conda-forge
+referencing                      0.36.2                 pyh29332c3_0           conda-forge
+requests                         2.32.5                 pyhd8ed1ab_0           conda-forge
+rfc3339-validator                0.1.4                  pyhd8ed1ab_1           conda-forge
+rfc3986-validator                0.1.1                  pyh9f0ad1d_0           conda-forge
+rfc3987-syntax                   1.1.0                  pyhe01879c_1           conda-forge
+rpds-py                          0.27.0                 py313hfbe8231_0        conda-forge
+ruff                             0.13.0                 pypi_0                 pypi
+scipy                            1.16.1                 py313h22ae3c1_0        conda-forge
+send2trash                       1.8.3                  pyh5737063_1           conda-forge
+setuptools                       78.1.1                 py313haa95532_0
+simon-cipher                     0.1.1                  pypi_0                 pypi
+simonspeckciphers                1.0.0                  pypi_0                 pypi
+sip                              6.10.0                 py313h5813708_0        conda-forge
+six                              1.17.0                 pyhe01879c_1           conda-forge
+sniffio                          1.3.1                  pyhd8ed1ab_1           conda-forge
+soupsieve                        2.7                    pyhd8ed1ab_0           conda-forge
+sqlite                           3.50.2                 hda9a48d_1 
+stack_data                       0.6.3                  pyhd8ed1ab_1           conda-forge
+svt-av1                          3.1.2                  hac47afa_0             conda-forge
+sympy                            1.13.3                 pypi_0                 pypi
+tbb                              2021.13.0              h18a62a1_3             conda-forge
+terminado                        0.18.1                 pyh5737063_0           conda-forge
+tinycss2                         1.4.0                  pyhd8ed1ab_0           conda-forge
+tk                               8.6.15                 hf199647_0 
+tomli                            2.2.1                  pyhe01879c_2           conda-forge
+torch                            2.8.0+cpu              pypi_0                 pypi
+tornado                          6.5.2                  py313h5ea7bf4_0        conda-forge
+tqdm                             4.67.1                 py313h4442805_0
+traitlets                        5.14.3                 pyhd8ed1ab_1           conda-forge
+types-python-dateutil            2.9.0.20250822         pyhd8ed1ab_0           conda-forge
+typing-extensions                4.14.1                 h4440ef1_0             conda-forge
+typing_extensions                4.14.1                 pyhe01879c_0           conda-forge
+typing_utils                     0.1.0                  pyhd8ed1ab_1           conda-forge
+tzdata                           2025b                  h04d1e81_0 
+ucrt                             10.0.22621.0           haa95532_0 
+uri-template                     1.3.0                  pyhd8ed1ab_1           conda-forge
+urllib3                          2.5.0                  pyhd8ed1ab_0           conda-forge
+vc                               14.3                   h2df5915_10
+vc14_runtime                     14.44.35208            h4927774_10
+vs2015_runtime                   14.44.35208            ha6b5a95_10
+wcwidth                          0.2.13                 pyhd8ed1ab_1           conda-forge
+webcolors                        24.11.1                pyhd8ed1ab_0           conda-forge
+webencodings                     0.5.1                  pyhd8ed1ab_3           conda-forge
+websocket-client                 1.8.0                  pyhd8ed1ab_1           conda-forge
+wheel                            0.45.1                 py313haa95532_0
+widgetsnbextension               4.0.14                 pyhd8ed1ab_0           conda-forge
+win_inet_pton                    1.1.0                  pyh7428d3b_8           conda-forge
+winpty                           0.4.3                  4          
+            conda-forge
+xz                               5.6.4                  h4754444_1 
+yaml                             0.2.5                  h6a83c73_3             conda-forge
+zeromq                           4.3.5                  ha9f60a1_7             conda-forge
+zipp                             3.23.0                 pyhd8ed1ab_0           conda-forge
+zlib                             1.2.13                 h8cc25b3_1 
+zstandard                        0.23.0                 py313h5ea7bf4_3        conda-forge
+zstd                             1.5.6                  h8880b57_0 
+(gcs-env) PS C:\Users\burak\Desktop\crypto> 
+-----------------------
+these are the contnents of the envireonemrnt 
+----------------------------------------

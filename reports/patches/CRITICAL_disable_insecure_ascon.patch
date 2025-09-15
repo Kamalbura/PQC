@@ -1,0 +1,12 @@
+--- a/drone/drone_ascon.py
++++ b/drone/drone_ascon.py
+@@ -22,6 +22,9 @@
+ 
+ print("[ASCON Drone] Starting Key Exchange...")
+ 
++# CRITICAL SECURITY ISSUE: Insecure pre-shared key exchange
++raise NotImplementedError("Disabled: insecure 16-byte key exchange over plain TCP. Replace with authenticated key exchange protocol.")
++
+ # Use simple key exchange for symmetric algorithm (normally would use Kyber for real deployment)
+ ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ while True:

@@ -1,0 +1,27 @@
+{
+  "algorithm_name_mappings": {
+    "Dilithium2": "ML-DSA-44",
+    "Dilithium3": "ML-DSA-65", 
+    "Dilithium5": "ML-DSA-87",
+    "Kyber768": "ML-KEM-768",
+    "Kyber512": "ML-KEM-512",
+    "Kyber1024": "ML-KEM-1024",
+    "Falcon-512": "Falcon-512",
+    "Falcon-1024": "Falcon-1024",
+    "SPHINCS+-SHA2-128f-simple": "SPHINCS+-SHA2-128f-simple",
+    "SPHINCS+-SHA2-256f-simple": "SPHINCS+-SHA2-256f-simple",
+    "SPHINCS+-HARAKA-128f-simple": "SPHINCS+-HARAKA-128f-simple",
+    "SPHINCS+-HARAKA-256f-simple": "SPHINCS+-HARAKA-256f-simple"
+  },
+  "import_replacements": {
+    "import oqs.oqs as oqs": "# DISABLED: Direct liboqs import violates project constraints",
+    "from ip_config import *": "from .ip_config import *"
+  },
+  "critical_replacements": {
+    "global dilithium, sig_public_key": "# CRITICAL: Replace global key storage with secure key management",
+    "global falcon, sig_keypair": "# CRITICAL: Replace global key storage with secure key management", 
+    "global spx, sig_public_key": "# CRITICAL: Replace global key storage with secure key management",
+    "os.urandom(": "# TODO: Add entropy validation for cryptographic randomness",
+    "return None": "# CRITICAL: Should raise exception instead of returning None"
+  }
+}

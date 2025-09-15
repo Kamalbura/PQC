@@ -1,0 +1,975 @@
+=== Interactive GCS Application Log Started at 2025-09-15 02:29:11.209367 ===
+Configuration: GCS_HOST=127.0.0.1, DRONE_HOST=127.0.0.1
+Command Output Port: 5810
+Telemetry Input Port: 5822
+================================================================================
+[2025-09-15 02:29:11.209] STARTUP: Interactive GCS Application starting...
+[2025-09-15 02:29:11.210] STARTUP: Telemetry receiver started, waiting for user input...
+22
+[2025-09-15 02:30:27.508] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 1,
+  "timestamp": "2025-09-15T02:30:27.504168",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.5,
+  "gps_lat": 40.7129,
+  "gps_lon": -74.0059,
+  "altitude": 102.0,
+  "ground_speed": 16.0,
+  "heading": 10,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 5
+}
+[2025-09-15 02:30:27.508] PROCESSED_TELEMETRY: Alt:102.0m Speed:16.0m/s Batt:12.5V Mode:GUIDED Armed:True
+[2025-09-15 02:30:29.831] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 2,
+  "timestamp": "2025-09-15T02:30:29.830631",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.6,
+  "gps_lat": 40.713,
+  "gps_lon": -74.0058,
+  "altitude": 104.0,
+  "ground_speed": 16.5,
+  "heading": 20,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 6
+}
+[2025-09-15 02:30:29.831] PROCESSED_TELEMETRY: Alt:104.0m Speed:16.5m/s Batt:12.6V Mode:GUIDED Armed:True
+[2025-09-15 02:30:31.337] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 3,
+  "timestamp": "2025-09-15T02:30:31.337083",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.7,
+  "gps_lat": 40.7131,
+  "gps_lon": -74.0057,
+  "altitude": 106.0,
+  "ground_speed": 17.0,
+  "heading": 30,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 7
+}
+[2025-09-15 02:30:31.338] PROCESSED_TELEMETRY: Alt:106.0m Speed:17.0m/s Batt:12.7V Mode:GUIDED Armed:True
+[2025-09-15 02:30:50.678] SENT_COMMAND (port 5810): {
+  "counter": 1,
+  "timestamp": "2025-09-15T02:30:50.677570",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 1,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7138,
+  "y": -74.005,
+  "z": 60.0
+}
+[2025-09-15 02:30:52.378] SENT_COMMAND (port 5810): {
+  "counter": 2,
+  "timestamp": "2025-09-15T02:30:52.378853",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 02:30:53.458] SENT_COMMAND (port 5810): {
+  "counter": 3,
+  "timestamp": "2025-09-15T02:30:53.458864",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407158000,
+  "lon_int": -740030000,
+  "alt": 115.0
+}
+[2025-09-15 02:31:57.564] SENT_COMMAND (port 5810): {
+  "counter": 4,
+  "timestamp": "2025-09-15T02:31:57.563711",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 02:31:57.939] SENT_COMMAND (port 5810): {
+  "counter": 5,
+  "timestamp": "2025-09-15T02:31:57.939196",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "GUIDED",
+  "custom_mode": 4
+}
+[2025-09-15 02:31:58.287] SENT_COMMAND (port 5810): {
+  "counter": 6,
+  "timestamp": "2025-09-15T02:31:58.287792",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 6,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7188,
+  "y": -74.0,
+  "z": 60.0
+}
+[2025-09-15 02:32:04.378] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 4,
+  "timestamp": "2025-09-15T02:32:04.377236",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.8,
+  "gps_lat": 40.7132,
+  "gps_lon": -74.0056,
+  "altitude": 108.0,
+  "ground_speed": 17.5,
+  "heading": 40,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 8
+}
+[2025-09-15 02:32:04.378] PROCESSED_TELEMETRY: Alt:108.0m Speed:17.5m/s Batt:12.8V Mode:GUIDED Armed:True
+[2025-09-15 02:32:04.684] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 5,
+  "timestamp": "2025-09-15T02:32:04.684328",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.9,
+  "gps_lat": 40.7133,
+  "gps_lon": -74.0055,
+  "altitude": 110.0,
+  "ground_speed": 18.0,
+  "heading": 50,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 9
+}
+[2025-09-15 02:32:04.685] PROCESSED_TELEMETRY: Alt:110.0m Speed:18.0m/s Batt:12.9V Mode:GUIDED Armed:True
+[2025-09-15 02:32:04.993] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 6,
+  "timestamp": "2025-09-15T02:32:04.992666",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.0,
+  "gps_lat": 40.7134,
+  "gps_lon": -74.0054,
+  "altitude": 112.0,
+  "ground_speed": 18.5,
+  "heading": 60,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 10
+}
+[2025-09-15 02:32:04.993] PROCESSED_TELEMETRY: Alt:112.0m Speed:18.5m/s Batt:13.0V Mode:GUIDED Armed:True
+[2025-09-15 02:32:21.324] SENT_COMMAND (port 5810): {
+  "counter": 7,
+  "timestamp": "2025-09-15T02:32:21.324170",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 02:33:34.451] SENT_COMMAND (port 5810): {
+  "counter": 8,
+  "timestamp": "2025-09-15T02:33:34.451345",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407208000,
+  "lon_int": -739980000,
+  "alt": 140.0
+}
+[2025-09-15 02:33:34.985] SENT_COMMAND (port 5810): {
+  "counter": 9,
+  "timestamp": "2025-09-15T02:33:34.985059",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 02:33:35.287] SENT_COMMAND (port 5810): {
+  "counter": 10,
+  "timestamp": "2025-09-15T02:33:35.287753",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "AUTO",
+  "custom_mode": 4
+}
+[2025-09-15 02:33:43.684] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 8,
+  "timestamp": "2025-09-15T02:33:43.683972",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.2,
+  "gps_lat": 40.7136,
+  "gps_lon": -74.0052,
+  "altitude": 116.0,
+  "ground_speed": 19.5,
+  "heading": 80,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 12
+}
+[2025-09-15 02:33:43.685] PROCESSED_TELEMETRY: Alt:116.0m Speed:19.5m/s Batt:13.2V Mode:GUIDED Armed:True
+[2025-09-15 02:33:43.993] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 9,
+  "timestamp": "2025-09-15T02:33:43.992654",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.3,
+  "gps_lat": 40.7137,
+  "gps_lon": -74.0051,
+  "altitude": 118.0,
+  "ground_speed": 20.0,
+  "heading": 90,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 4
+}
+[2025-09-15 02:33:43.993] PROCESSED_TELEMETRY: Alt:118.0m Speed:20.0m/s Batt:13.3V Mode:GUIDED Armed:True
+[2025-09-15 02:33:44.309] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 10,
+  "timestamp": "2025-09-15T02:33:44.309538",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.4,
+  "gps_lat": 40.7138,
+  "gps_lon": -74.005,
+  "altitude": 120.0,
+  "ground_speed": 15.5,
+  "heading": 100,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 5
+}
+[2025-09-15 02:33:44.310] PROCESSED_TELEMETRY: Alt:120.0m Speed:15.5m/s Batt:12.4V Mode:GUIDED Armed:True
+[2025-09-15 02:35:04.342] SENT_COMMAND (port 5810): {
+  "counter": 11,
+  "timestamp": "2025-09-15T02:35:04.342175",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 11,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7138,
+  "y": -74.005,
+  "z": 60.0
+}
+[2025-09-15 02:35:04.553] SENT_COMMAND (port 5810): {
+  "counter": 12,
+  "timestamp": "2025-09-15T02:35:04.553200",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 1.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 02:35:04.759] SENT_COMMAND (port 5810): {
+  "counter": 13,
+  "timestamp": "2025-09-15T02:35:04.759009",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407158000,
+  "lon_int": -740030000,
+  "alt": 115.0
+}
+[2025-09-15 02:35:10.397] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 11,
+  "timestamp": "2025-09-15T02:35:10.394348",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.5,
+  "gps_lat": 40.7139,
+  "gps_lon": -74.0049,
+  "altitude": 122.0,
+  "ground_speed": 16.0,
+  "heading": 110,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 6
+}
+[2025-09-15 02:35:10.397] PROCESSED_TELEMETRY: Alt:122.0m Speed:16.0m/s Batt:12.5V Mode:GUIDED Armed:True
+[2025-09-15 02:35:10.600] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 12,
+  "timestamp": "2025-09-15T02:35:10.597852",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.6,
+  "gps_lat": 40.714,
+  "gps_lon": -74.0048,
+  "altitude": 124.0,
+  "ground_speed": 16.5,
+  "heading": 120,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 7
+}
+[2025-09-15 02:35:10.600] PROCESSED_TELEMETRY: Alt:124.0m Speed:16.5m/s Batt:12.6V Mode:GUIDED Armed:True
+[2025-09-15 02:35:10.789] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 13,
+  "timestamp": "2025-09-15T02:35:10.786142",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.7,
+  "gps_lat": 40.7141,
+  "gps_lon": -74.0047,
+  "altitude": 126.0,
+  "ground_speed": 17.0,
+  "heading": 130,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 8
+}
+[2025-09-15 02:35:10.789] PROCESSED_TELEMETRY: Alt:126.0m Speed:17.0m/s Batt:12.7V Mode:GUIDED Armed:True
+[2025-09-15 02:38:05.350] SENT_COMMAND (port 5810): {
+  "counter": 14,
+  "timestamp": "2025-09-15T02:38:05.350001",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 02:38:05.557] SENT_COMMAND (port 5810): {
+  "counter": 15,
+  "timestamp": "2025-09-15T02:38:05.557001",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "GUIDED",
+  "custom_mode": 4
+}
+[2025-09-15 02:38:05.757] SENT_COMMAND (port 5810): {
+  "counter": 16,
+  "timestamp": "2025-09-15T02:38:05.757223",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 16,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7188,
+  "y": -74.0,
+  "z": 60.0
+}
+[2025-09-15 02:38:10.604] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 14,
+  "timestamp": "2025-09-15T02:38:10.600546",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.8,
+  "gps_lat": 40.7142,
+  "gps_lon": -74.0046,
+  "altitude": 128.0,
+  "ground_speed": 17.5,
+  "heading": 140,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 9
+}
+[2025-09-15 02:38:10.604] PROCESSED_TELEMETRY: Alt:128.0m Speed:17.5m/s Batt:12.8V Mode:GUIDED Armed:True
+[2025-09-15 02:38:10.806] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 15,
+  "timestamp": "2025-09-15T02:38:10.804289",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.9,
+  "gps_lat": 40.7143,
+  "gps_lon": -74.0045,
+  "altitude": 130.0,
+  "ground_speed": 18.0,
+  "heading": 150,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 10
+}
+[2025-09-15 02:38:10.807] PROCESSED_TELEMETRY: Alt:130.0m Speed:18.0m/s Batt:12.9V Mode:GUIDED Armed:True
+[2025-09-15 02:38:11.013] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 16,
+  "timestamp": "2025-09-15T02:38:11.011568",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.0,
+  "gps_lat": 40.7144,
+  "gps_lon": -74.0044,
+  "altitude": 132.0,
+  "ground_speed": 18.5,
+  "heading": 160,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 11
+}
+[2025-09-15 02:38:11.013] PROCESSED_TELEMETRY: Alt:132.0m Speed:18.5m/s Batt:13.0V Mode:GUIDED Armed:True
+[2025-09-15 02:41:12.680] SENT_COMMAND (port 5810): {
+  "counter": 17,
+  "timestamp": "2025-09-15T02:41:12.679640",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 1.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 02:41:12.909] SENT_COMMAND (port 5810): {
+  "counter": 18,
+  "timestamp": "2025-09-15T02:41:12.909413",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407208000,
+  "lon_int": -739980000,
+  "alt": 140.0
+}
+[2025-09-15 02:41:13.149] SENT_COMMAND (port 5810): {
+  "counter": 19,
+  "timestamp": "2025-09-15T02:41:13.148927",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 02:41:21.805] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 17,
+  "timestamp": "2025-09-15T02:41:21.801943",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.1,
+  "gps_lat": 40.7145,
+  "gps_lon": -74.0043,
+  "altitude": 134.0,
+  "ground_speed": 19.0,
+  "heading": 170,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 12
+}
+[2025-09-15 02:41:21.805] PROCESSED_TELEMETRY: Alt:134.0m Speed:19.0m/s Batt:13.1V Mode:GUIDED Armed:True
+[2025-09-15 02:41:22.025] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 18,
+  "timestamp": "2025-09-15T02:41:22.022921",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.2,
+  "gps_lat": 40.7146,
+  "gps_lon": -74.0042,
+  "altitude": 136.0,
+  "ground_speed": 19.5,
+  "heading": 180,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 4
+}
+[2025-09-15 02:41:22.026] PROCESSED_TELEMETRY: Alt:136.0m Speed:19.5m/s Batt:13.2V Mode:GUIDED Armed:True
+[2025-09-15 02:41:22.203] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 19,
+  "timestamp": "2025-09-15T02:41:22.201211",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.3,
+  "gps_lat": 40.7147,
+  "gps_lon": -74.0041,
+  "altitude": 138.0,
+  "ground_speed": 20.0,
+  "heading": 190,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 5
+}
+[2025-09-15 02:41:22.204] PROCESSED_TELEMETRY: Alt:138.0m Speed:20.0m/s Batt:13.3V Mode:GUIDED Armed:True
+[2025-09-15 02:45:29.773] SENT_COMMAND (port 5810): {
+  "counter": 20,
+  "timestamp": "2025-09-15T02:45:29.773264",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "AUTO",
+  "custom_mode": 4
+}
+[2025-09-15 02:45:29.961] SENT_COMMAND (port 5810): {
+  "counter": 21,
+  "timestamp": "2025-09-15T02:45:29.961391",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 21,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7138,
+  "y": -74.005,
+  "z": 60.0
+}
+[2025-09-15 02:45:30.166] SENT_COMMAND (port 5810): {
+  "counter": 22,
+  "timestamp": "2025-09-15T02:45:30.166507",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 02:45:40.709] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 20,
+  "timestamp": "2025-09-15T02:45:40.705785",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.4,
+  "gps_lat": 40.7148,
+  "gps_lon": -74.004,
+  "altitude": 140.0,
+  "ground_speed": 15.5,
+  "heading": 200,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 6
+}
+[2025-09-15 02:45:40.710] PROCESSED_TELEMETRY: Alt:140.0m Speed:15.5m/s Batt:12.4V Mode:GUIDED Armed:True
+[2025-09-15 02:45:40.910] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 21,
+  "timestamp": "2025-09-15T02:45:40.907005",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.5,
+  "gps_lat": 40.7149,
+  "gps_lon": -74.0039,
+  "altitude": 142.0,
+  "ground_speed": 16.0,
+  "heading": 210,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 7
+}
+[2025-09-15 02:45:40.910] PROCESSED_TELEMETRY: Alt:142.0m Speed:16.0m/s Batt:12.5V Mode:GUIDED Armed:True
+[2025-09-15 02:45:41.070] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 22,
+  "timestamp": "2025-09-15T02:45:41.067082",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.6,
+  "gps_lat": 40.715,
+  "gps_lon": -74.0038,
+  "altitude": 144.0,
+  "ground_speed": 16.5,
+  "heading": 220,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 8
+}
+[2025-09-15 02:45:41.071] PROCESSED_TELEMETRY: Alt:144.0m Speed:16.5m/s Batt:12.6V Mode:GUIDED Armed:True
+[2025-09-15 02:47:00.523] SENT_COMMAND (port 5810): {
+  "counter": 23,
+  "timestamp": "2025-09-15T02:47:00.523344",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407158000,
+  "lon_int": -740030000,
+  "alt": 115.0
+}
+[2025-09-15 02:47:00.708] SENT_COMMAND (port 5810): {
+  "counter": 24,
+  "timestamp": "2025-09-15T02:47:00.708119",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 02:47:00.896] SENT_COMMAND (port 5810): {
+  "counter": 25,
+  "timestamp": "2025-09-15T02:47:00.896400",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "GUIDED",
+  "custom_mode": 4
+}
+[2025-09-15 02:47:04.775] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 23,
+  "timestamp": "2025-09-15T02:47:04.769577",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.7,
+  "gps_lat": 40.7151,
+  "gps_lon": -74.0037,
+  "altitude": 146.0,
+  "ground_speed": 17.0,
+  "heading": 230,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 9
+}
+[2025-09-15 02:47:04.776] PROCESSED_TELEMETRY: Alt:146.0m Speed:17.0m/s Batt:12.7V Mode:GUIDED Armed:True
+[2025-09-15 02:47:04.986] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 24,
+  "timestamp": "2025-09-15T02:47:04.981375",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.8,
+  "gps_lat": 40.7152,
+  "gps_lon": -74.0036,
+  "altitude": 148.0,
+  "ground_speed": 17.5,
+  "heading": 240,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 10
+}
+[2025-09-15 02:47:04.987] PROCESSED_TELEMETRY: Alt:148.0m Speed:17.5m/s Batt:12.8V Mode:GUIDED Armed:True
+[2025-09-15 02:47:05.173] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 25,
+  "timestamp": "2025-09-15T02:47:05.167815",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.9,
+  "gps_lat": 40.7153,
+  "gps_lon": -74.0035,
+  "altitude": 150.0,
+  "ground_speed": 18.0,
+  "heading": 250,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 11
+}
+[2025-09-15 02:47:05.173] PROCESSED_TELEMETRY: Alt:150.0m Speed:18.0m/s Batt:12.9V Mode:GUIDED Armed:True
+[2025-09-15 03:21:58.549] SENT_COMMAND (port 5810): {
+  "counter": 26,
+  "timestamp": "2025-09-15T03:21:58.548777",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 26,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7188,
+  "y": -74.0,
+  "z": 60.0
+}
+[2025-09-15 03:21:58.763] SENT_COMMAND (port 5810): {
+  "counter": 27,
+  "timestamp": "2025-09-15T03:21:58.763571",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "COMMAND_LONG",
+  "command": 400,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "param5": 0.0,
+  "param6": 0.0,
+  "param7": 0.0
+}
+[2025-09-15 03:21:58.957] SENT_COMMAND (port 5810): {
+  "counter": 28,
+  "timestamp": "2025-09-15T03:21:58.957327",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_POSITION_TARGET_GLOBAL_INT",
+  "coordinate_frame": 6,
+  "type_mask": 4088,
+  "lat_int": 407208000,
+  "lon_int": -739980000,
+  "alt": 140.0
+}
+[2025-09-15 03:22:05.746] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 26,
+  "timestamp": "2025-09-15T03:22:05.664667",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.0,
+  "gps_lat": 40.7154,
+  "gps_lon": -74.0034,
+  "altitude": 152.0,
+  "ground_speed": 18.5,
+  "heading": 260,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 12
+}
+[2025-09-15 03:22:05.746] PROCESSED_TELEMETRY: Alt:152.0m Speed:18.5m/s Batt:13.0V Mode:GUIDED Armed:True
+[2025-09-15 03:22:05.926] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 27,
+  "timestamp": "2025-09-15T03:22:05.845019",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.1,
+  "gps_lat": 40.7155,
+  "gps_lon": -74.0033,
+  "altitude": 154.0,
+  "ground_speed": 19.0,
+  "heading": 270,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 4
+}
+[2025-09-15 03:22:05.927] PROCESSED_TELEMETRY: Alt:154.0m Speed:19.0m/s Batt:13.1V Mode:GUIDED Armed:True
+[2025-09-15 03:22:06.113] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 28,
+  "timestamp": "2025-09-15T03:22:06.031314",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.2,
+  "gps_lat": 40.7156,
+  "gps_lon": -74.0032,
+  "altitude": 156.0,
+  "ground_speed": 19.5,
+  "heading": 280,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 5
+}
+[2025-09-15 03:22:06.114] PROCESSED_TELEMETRY: Alt:156.0m Speed:19.5m/s Batt:13.2V Mode:GUIDED Armed:True
+[2025-09-15 03:23:37.414] SENT_COMMAND (port 5810): {
+  "counter": 29,
+  "timestamp": "2025-09-15T03:23:37.414099",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "REQUEST_DATA_STREAM",
+  "req_stream_id": 1,
+  "req_message_rate": 5,
+  "start_stop": 1
+}
+[2025-09-15 03:23:37.588] SENT_COMMAND (port 5810): {
+  "counter": 30,
+  "timestamp": "2025-09-15T03:23:37.588682",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "SET_MODE",
+  "mode": "AUTO",
+  "custom_mode": 4
+}
+[2025-09-15 03:23:37.796] SENT_COMMAND (port 5810): {
+  "counter": 31,
+  "timestamp": "2025-09-15T03:23:37.796596",
+  "system_id": 255,
+  "component_id": 190,
+  "target_system": 1,
+  "target_component": 1,
+  "msg_id": "MISSION_ITEM",
+  "seq": 31,
+  "frame": 3,
+  "command": 16,
+  "param1": 0.0,
+  "param2": 0.0,
+  "param3": 0.0,
+  "param4": 0.0,
+  "x": 40.7138,
+  "y": -74.005,
+  "z": 60.0
+}
+[2025-09-15 03:23:40.997] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 29,
+  "timestamp": "2025-09-15T03:23:40.721976",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 13.3,
+  "gps_lat": 40.7157,
+  "gps_lon": -74.0031,
+  "altitude": 158.0,
+  "ground_speed": 20.0,
+  "heading": 290,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 6
+}
+[2025-09-15 03:23:40.998] PROCESSED_TELEMETRY: Alt:158.0m Speed:20.0m/s Batt:13.3V Mode:GUIDED Armed:True
+[2025-09-15 03:23:41.297] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 30,
+  "timestamp": "2025-09-15T03:23:40.910104",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.4,
+  "gps_lat": 40.7158,
+  "gps_lon": -74.003,
+  "altitude": 160.0,
+  "ground_speed": 15.5,
+  "heading": 300,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 7
+}
+[2025-09-15 03:23:41.297] PROCESSED_TELEMETRY: Alt:160.0m Speed:15.5m/s Batt:12.4V Mode:GUIDED Armed:True
+[2025-09-15 03:23:41.560] RECEIVED_TELEMETRY (port 5822): {
+  "msg_id": "HEARTBEAT",
+  "counter": 31,
+  "timestamp": "2025-09-15T03:23:41.077258",
+  "system_id": 1,
+  "component_id": 1,
+  "battery_voltage": 12.5,
+  "gps_lat": 40.7159,
+  "gps_lon": -74.0029,
+  "altitude": 162.0,
+  "ground_speed": 16.0,
+  "heading": 310,
+  "flight_mode": "GUIDED",
+  "armed": true,
+  "satellites": 8
+}
+[2025-09-15 03:23:41.561] PROCESSED_TELEMETRY: Alt:162.0m Speed:16.0m/s Batt:12.5V Mode:GUIDED Armed:True

@@ -1,0 +1,17 @@
+Algorithm,Drone_Proxy,GCS_Proxy,Drone_Import_Correct,GCS_Import_Correct,Notes
+ML-KEM-512,drone_kyber_512.py,gcs_kyber_512.py,VIOLATION,VIOLATION,Direct liboqs import
+ML-KEM-768,drone_kyber_768.py,gcs_kyber_768.py,VIOLATION,VIOLATION,Direct liboqs import
+ML-KEM-1024,drone_kyber_1024.py,gcs_kyber_1024.py,VIOLATION,VIOLATION,Direct liboqs import
+ML-DSA-44,drone_dilithium2.py,gcs_dilithium2.py,VIOLATION,VIOLATION,Wrong algorithm name + direct import
+ML-DSA-65,drone_dilithium3.py,gcs_dilithium3.py,VIOLATION,VIOLATION,Wrong algorithm name + direct import
+ML-DSA-87,drone_dilithium5.py,gcs_dilithium5.py,VIOLATION,VIOLATION,Wrong algorithm name + direct import
+Falcon-512,drone_falcon512.py,gcs_falcon512.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+Falcon-1024,drone_falcon1024.py,gcs_falcon1024.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+SPHINCS+-SHA2-128f,drone_sphincs_sha2_128f.py,gcs_sphincs_sha2_128f.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+SPHINCS+-SHA2-256f,drone_sphincs_sha2_256f.py,gcs_sphincs_sha2_256f.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+SPHINCS+-HARAKA-128f,drone_sphincs_haraka_128f.py,gcs_sphincs_haraka_128f.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+SPHINCS+-HARAKA-256f,drone_sphincs_haraka_256f.py,gcs_sphincs_haraka_256f.py,VIOLATION,VIOLATION,Direct liboqs import + wrong KEM name
+ASCON-128,drone_ascon.py,gcs_ascon.py,CRITICAL,CRITICAL,Insecure key exchange - DISABLED
+Camellia-128,drone_camellia.py,gcs_camellia.py,UNKNOWN,UNKNOWN,Needs audit
+HIGHT,drone_hight.py,gcs_hight.py,UNKNOWN,UNKNOWN,Needs audit
+PRINTcipher,drone_printcipher.py,gcs_printcipher.py,UNKNOWN,UNKNOWN,Needs audit

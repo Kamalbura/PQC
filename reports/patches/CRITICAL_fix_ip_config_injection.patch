@@ -1,0 +1,73 @@
+--- a/drone/ip_config.py
++++ b/drone/ip_config.py
+@@ -72,23 +72,31 @@
+ def update_hosts_persistent(new_gcs: Optional[str]=None, new_drone: Optional[str]=None) -> List[str]:
+ 	"""Edit this ip_config.py to persist new host values. Returns list of changes applied."""
+ 	path = __file__
++	
++	# Input validation to prevent injection attacks
++	if new_gcs and not _is_valid_host(new_gcs):
++		raise ValueError(f"Invalid GCS host format: {new_gcs}")
++	if new_drone and not _is_valid_host(new_drone):
++		raise ValueError(f"Invalid drone host format: {new_drone}")
++	
+ 	try:
+ 		with open(path, 'r', encoding='utf-8') as f:
+ 			content = f.read()
++		
++		# Use atomic file writing
++		temp_path = path + '.tmp'
+ 		changes=[]
+ 		def repl_line(src:str, key:str, val:Optional[str]) -> str:
+ 			nonlocal changes
+ 			if not val: return src
+-			pattern = rf"^(\s*{key}\s*=\s*)\"[^\"]*\""
++			# Safe string replacement instead of regex
+ 			ts = time.strftime('%Y-%m-%d %H:%M:%S')
+-			new_src, n = re.subn(pattern, rf"# updated {ts} \g<0>\n{key} = \"{val}\"", src, count=1, flags=re.MULTILINE)
+-			if n:
++			old_line = f'{key} = "'
++			if old_line in src:
++				lines = src.split('\n')
++				for i, line in enumerate(lines):
++					if line.strip().startswith(old_line):
++						lines[i] = f"# updated {ts} {line}"
++						lines.insert(i+1, f'{key} = "{val}"')
++						changes.append(f"{key}->{val}")
++						return '\n'.join(lines)
++			return src
++		
+ 		content2 = repl_line(content, 'GCS_HOST', new_gcs)
+ 		content3 = repl_line(content2, 'DRONE_HOST', new_drone)
++		
+ 		if content3 != content:
+-			with open(path, 'w', encoding='utf-8') as f:
++			# Atomic write
++			with open(temp_path, 'w', encoding='utf-8') as f:
+ 				f.write(content3)
++			import os
++			os.replace(temp_path, path)
++		
+ 		return changes
+-	except Exception:
++	except Exception as e:
++		# Clean up temp file if it exists
++		try:
++			os.unlink(temp_path)
++		except:
++			pass
+ 		return []
++
++def _is_valid_host(host: str) -> bool:
++	"""Validate host string to prevent injection attacks."""
++	import ipaddress
++	try:
++		# Try parsing as IP address
++		ipaddress.ip_address(host)
++		return True
++	except ValueError:
++		# Try parsing as hostname (basic validation)
++		if len(host) > 253:
++			return False
++		allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-')
++		return all(c in allowed_chars for c in host) and not host.startswith('-') and not host.endswith('-')

@@ -1,0 +1,37 @@
+--- a/drone/drone_kyber_512.py
++++ b/drone/drone_kyber_512.py
+@@ -12,8 +12,9 @@
+ import hashlib
+ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+ from ip_config import *
+-import oqs.oqs as oqs
+ 
++# CRITICAL: Direct liboqs import violates project constraints
++raise NotImplementedError("Disabled: replace with liboqs-backed wrapper or vendor implementation")
+ print("[KYBER-512 Drone] Starting Key Exchange (ML-KEM-512)...")
+ 
+ def _recv_exact(conn: socket.socket, n: int) -> bytes:
+
+--- a/drone/drone_dilithium2.py
++++ b/drone/drone_dilithium2.py
+@@ -38,6 +38,8 @@
+ def setup_dilithium_and_kyber():
+     global dilithium, sig_public_key
+     try:
++        # CRITICAL: Direct liboqs import violates project constraints
++        raise NotImplementedError("Disabled: replace with liboqs-backed wrapper or vendor implementation")
+         import oqs.oqs as oqs
+         dilithium = oqs.Signature("ML-DSA-44")
+         sig_public_key = dilithium.generate_keypair()
+
+--- a/drone/drone_falcon512.py
++++ b/drone/drone_falcon512.py
+@@ -42,6 +42,8 @@
+ def setup_falcon_and_kyber():
+     """Initialize Falcon-512 and Kyber-768 using liboqs"""
+     global falcon, sig_keypair
++    # CRITICAL: Direct liboqs import violates project constraints  
++    raise NotImplementedError("Disabled: replace with liboqs-backed wrapper or vendor implementation")
+ 
+     try:
+         import oqs.oqs as oqs

@@ -1,0 +1,56 @@
+Post-Quantum Drone Comms — Proxy Audit & Test Checklist
+Date: 2025-09-14
+Env: Windows PowerShell, conda gcs-env, Python 3.13, liboqs-python 0.14.0
+
+Objective
+- Verify EVERY crypto proxy pair (drone_*.py / gcs_*.py) for:
+  1) liboqs-0.14 API correctness (generate_keypair, encap_secret/decap_secret; sign/verify)
+  2) TCP key-exchange framing (length-prefixed; sendall/recv loops)
+  3) UDP recv buffer ≥ 65535 (big signatures like SPHINCS+, Dilithium, Falcon)
+  4) Two-thread daemon proxy pattern respected
+  5) Port schema (5800, 5810–5812, 5820–5822) and hosts from ip_config
+  6) AES-256-GCM transport (nonce=12 bytes; key=SHA-256(shared_secret))
+  7) Algorithm identifiers match enabled liboqs mechanisms (e.g., SPHINCS+ "-simple")
+
+Legend
+- OK: Verified good
+- FIXED: Was wrong; patched
+- TODO: Needs change
+- N/A: Not applicable (pre-quantum; no liboqs)
+
+Current Status Snapshot
+- SPHINCS+-SHA2-128f: GCS/Drone — FIXED (liboqs 0.14, robust TCP length framing, UDP buf 65535); localhost E2E PASS
+- Dilithium2: GCS/Drone — FIXED (liboqs 0.14 sign/verify; ML-KEM-768 KEM with length framing; UDP buf 65535); localhost E2E PASS
+- ASCON: UDP buffers increased to 65535 (both sides); needs E2E run
+
+Planned Audit Order
+1) Signature proxies: Dilithium2/3/5, Falcon-512/1024, SPHINCS+-SHA2-256f, SPHINCS+-Haraka-128f/256f
+2) KEM proxies: Kyber-512/768/1024
+3) AEAD/block proxies: ASCON, Camellia, HIGHT, PRINTcipher
+
+Audit Checks (per file)
+- [liboqs] import oqs.oqs as oqs
+- [KEM API] KeyEncapsulation("KyberXXX"); use generate_keypair() -> pub; export_secret_key(); encap_secret(pub) -> (ct, ss); decap_secret(ct) -> ss
+- [Signature API] spx/dsig = oqs.Signature("<algo>"); pk = .generate_keypair(); sign(m); verify(m, sig, pk)
+- [TCP Framing] helper _recv_exact/_recv_with_len/_send_with_len; sendall/recv
+- [UDP Size] recvfrom(65535)
+- [Threads] Exactly two daemon threads
+- [Ports] ip_config constants only; NONCE_IV_SIZE=12
+- [AES-GCM] AESGCM(sha256(shared_secret)); nonce = os.urandom(12)
+
+E2E Coverage Plan (localhost)
+- Already: SPHINCS+-SHA2-128f e2e PASS
+- Next:
+  - ASCON e2e: commands+telemetry (after buffer bump) — TODO
+  - Falcon-512 e2e: commands+telemetry (after liboqs 0.14 refactor) — TODO
+  - Kyber-768 transport-only pair: ensure framing and buffers — TODO
+
+Notes
+- Haraka variants may be disabled in the current liboqs build; skip gracefully.
+- For proxies without KEM, ensure TCP 5800 is unused; transport keys come from their own scheme or static (verify design).
+
+Updates will append below as we audit and patch.
+\n+Updates
+- 2025-09-14: Dilithium5 GCS/Drone e2e PASS (localhost). Robust TCP framing confirmed; UDP 65535 verified.
+- 2025-09-14: Kyber-768 GCS/Drone e2e PASS (localhost). Length-prefixed KEM handshake; AES-256-GCM transport OK.
+- 2025-09-14: Kyber-512 and Kyber-1024 proxies refactored to length framing and UDP 65535 on both sides.
