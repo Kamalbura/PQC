@@ -25,6 +25,18 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from ip_config import *
 
+# Backwards-compatible port aliases: ensure legacy constant names map to current ones
+try:
+    PORT_GCS_LISTEN_ENCRYPTED_TLM
+except NameError:
+    PORT_GCS_LISTEN_ENCRYPTED_TLM = PORT_GCS_FORWARD_DECRYPTED_TLM
+
+try:
+    PORT_DRONE_LISTEN_ENCRYPTED_CMD
+except NameError:
+    PORT_DRONE_LISTEN_ENCRYPTED_CMD = PORT_DRONE_FORWARD_DECRYPTED_CMD
+
+
 ALGORITHM_NAME = "Dilithium2"
 NONCE_IV_SIZE = 12
 SIGNATURE_MARKER = b"DILITHIUM2_SIG"

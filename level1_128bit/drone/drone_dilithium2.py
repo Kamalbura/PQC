@@ -25,6 +25,20 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from ip_config import *
 
+# Backwards-compatible port aliases: some proxy scripts expect older constant names.
+# Map those older names to the canonical names defined in `ip_config.py` so both
+# naming styles work without changing all proxy logic.
+try:
+    PORT_GCS_LISTEN_ENCRYPTED_TLM
+except NameError:
+    PORT_GCS_LISTEN_ENCRYPTED_TLM = PORT_GCS_FORWARD_DECRYPTED_TLM
+
+try:
+    PORT_DRONE_LISTEN_ENCRYPTED_CMD
+except NameError:
+    PORT_DRONE_LISTEN_ENCRYPTED_CMD = PORT_DRONE_FORWARD_DECRYPTED_CMD
+
+
 ALGORITHM_NAME = "Dilithium2"
 NONCE_IV_SIZE = 12
 SIGNATURE_MARKER = b"DILITHIUM2_SIG"
