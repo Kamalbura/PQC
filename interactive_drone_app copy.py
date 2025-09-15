@@ -17,7 +17,6 @@ import threading
 import time
 import json
 import sys
-import argparse
 from datetime import datetime
 
 # Import drone-side configuration
@@ -37,9 +36,6 @@ class InteractiveDroneApp:
         self.telemetry_counter = 0
         self.command_counter = 0
         self.send_sock = None
-        self.auto_mode = False
-        self.auto_rate = 100  # packets per second by default
-        self.auto_duration = None  # seconds
         
     def log_message(self, message_type, data, port=None):
         """Log messages with timestamp"""
@@ -90,37 +86,6 @@ class InteractiveDroneApp:
             self.log_message("ERROR", f"Failed to send telemetry: {e}")
             print(f"❌ Error sending telemetry: {e}")
             return False
-
-    def _auto_sender_thread(self):
-        """Continuously send telemetry at self.auto_rate packets/sec for optional duration."""
-        interval = 1.0 / float(self.auto_rate)
-        start_time = time.time()
-        sent_in_second = 0
-        last_second = int(start_time)
-
-        while self.running:
-            now = time.time()
-            if self.auto_duration is not None and (now - start_time) >= self.auto_duration:
-                break
-
-            # send one packet
-            success = self.send_telemetry_now()
-            sent_in_second += 1 if success else 0
-
-            # Sleep to maintain rate
-            time.sleep(interval)
-
-        self.log_message("AUTO", f"Auto sender stopped after {time.time() - start_time:.2f}s")
-
-    def _auto_stats_thread(self):
-        """Log per-second stats while auto sender is running."""
-        last_total = self.telemetry_counter
-        while self.running:
-            time.sleep(1)
-            current_total = self.telemetry_counter
-            delta = current_total - last_total
-            last_total = current_total
-            self.log_message("AUTO_STATS", f"Packets sent in last second: {delta}")
     
     def command_receiver_thread(self):
         """Receive commands from drone PQC proxy"""
@@ -206,21 +171,14 @@ class InteractiveDroneApp:
             f.write("=" * 80 + "\n")
         
         self.log_message("STARTUP", "Interactive Drone Application starting...")
-
+        
         # Create UDP socket for sending telemetry
         self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+        
         # Start command receiver thread
         command_thread = threading.Thread(target=self.command_receiver_thread, daemon=True)
         command_thread.start()
-
-        # If auto mode is enabled, start the auto sender and stats thread
-        if self.auto_mode:
-            sender_thread = threading.Thread(target=self._auto_sender_thread, daemon=True)
-            stats_thread = threading.Thread(target=self._auto_stats_thread, daemon=True)
-            sender_thread.start()
-            stats_thread.start()
-
+        
         self.log_message("STARTUP", "Command receiver started, waiting for user input...")
         
         try:
@@ -247,18 +205,8 @@ def main():
     print(f"Command Input: {DRONE_HOST}:{PORT_DRONE_FORWARD_DECRYPTED_CMD}")
     print(f"Log File: {LOG_FILE}")
     print("\nThis app gives you MANUAL control over telemetry sending.")
-    parser = argparse.ArgumentParser(description="Interactive Drone App")
-    parser.add_argument('--auto', action='store_true', help='Run in automatic send mode')
-    parser.add_argument('--rate', type=int, default=100, help='Packets per second when in auto mode (default: 100)')
-    parser.add_argument('--duration', type=int, default=None, help='Duration in seconds for auto mode (optional)')
-    args = parser.parse_args()
-
+    
     app = InteractiveDroneApp()
-    if args.auto:
-        app.auto_mode = True
-        app.auto_rate = max(1, args.rate)
-        app.auto_duration = args.duration
-
     app.start()
 
 if __name__ == "__main__":

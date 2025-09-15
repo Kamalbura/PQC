@@ -17,7 +17,6 @@ import threading
 import time
 import json
 import sys
-import argparse
 from datetime import datetime
 
 # Import GCS-side configuration
@@ -38,9 +37,6 @@ class InteractiveGCSApp:
         self.command_counter = 0
         self.telemetry_counter = 0
         self.send_sock = None
-        self.auto_mode = False
-        self.auto_rate = 100
-        self.auto_duration = None
         
     def log_message(self, message_type, data, port=None):
         """Log messages with timestamp"""
@@ -142,32 +138,6 @@ class InteractiveGCSApp:
             self.log_message("ERROR", f"Failed to send command: {e}")
             print(f"❌ Error sending command: {e}")
             return False
-
-    def _auto_sender_thread(self):
-        """Continuously send commands at self.auto_rate packets/sec for optional duration."""
-        interval = 1.0 / float(self.auto_rate)
-        start_time = time.time()
-
-        while self.running:
-            now = time.time()
-            if self.auto_duration is not None and (now - start_time) >= self.auto_duration:
-                break
-
-            success = self.send_command_now()
-            # maintain rate
-            time.sleep(interval)
-
-        self.log_message("AUTO", f"Auto sender stopped after {time.time() - start_time:.2f}s")
-
-    def _auto_stats_thread(self):
-        """Log per-second stats while auto sender is running."""
-        last_total = self.command_counter
-        while self.running:
-            time.sleep(1)
-            current_total = self.command_counter
-            delta = current_total - last_total
-            last_total = current_total
-            self.log_message("AUTO_STATS", f"Commands sent in last second: {delta}")
     
     def telemetry_receiver_thread(self):
         """Receive telemetry from GCS PQC proxy"""
@@ -265,13 +235,6 @@ class InteractiveGCSApp:
         # Start telemetry receiver thread
         telemetry_thread = threading.Thread(target=self.telemetry_receiver_thread, daemon=True)
         telemetry_thread.start()
-
-        # If auto mode is enabled, start the auto sender and stats thread
-        if self.auto_mode:
-            sender_thread = threading.Thread(target=self._auto_sender_thread, daemon=True)
-            stats_thread = threading.Thread(target=self._auto_stats_thread, daemon=True)
-            sender_thread.start()
-            stats_thread.start()
         
         self.log_message("STARTUP", "Telemetry receiver started, waiting for user input...")
         
@@ -299,18 +262,8 @@ def main():
     print(f"Telemetry Input: {GCS_HOST}:{PORT_GCS_FORWARD_DECRYPTED_TLM}")
     print(f"Log File: {LOG_FILE}")
     print("\nThis app gives you MANUAL control over command sending.")
-    parser = argparse.ArgumentParser(description="Interactive GCS App")
-    parser.add_argument('--auto', action='store_true', help='Run in automatic send mode')
-    parser.add_argument('--rate', type=int, default=100, help='Packets per second when in auto mode (default: 100)')
-    parser.add_argument('--duration', type=int, default=None, help='Duration in seconds for auto mode (optional)')
-    args = parser.parse_args()
-
+    
     app = InteractiveGCSApp()
-    if args.auto:
-        app.auto_mode = True
-        app.auto_rate = max(1, args.rate)
-        app.auto_duration = args.duration
-
     app.start()
 
 if __name__ == "__main__":
