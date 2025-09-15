@@ -98,6 +98,5 @@ if __name__ == "__main__":
     t2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
     t1.start()
     t2.start()
-    print("READY")
     t1.join()
     t2.join()

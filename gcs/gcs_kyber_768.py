@@ -110,5 +110,6 @@ if __name__ == "__main__":
     t2 = threading.Thread(target=gcs_to_drone_thread, daemon=True)
     t1.start()
     t2.start()
+    print("READY")
     t1.join()
     t2.join()

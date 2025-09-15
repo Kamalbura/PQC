@@ -1,11 +1,11 @@
 # ==============================================================================
-# gcs_kyber_512.py
+# gcs_kyber_768.py
 #
-# GCS-Side Proxy for Post-Quantum Key Exchange using ML-KEM-512 (Kyber-512)
-# NIST Security Level 1
+# GCS-Side Proxy for Post-Quantum Key Exchange using ML-KEM-768 (Kyber-768)
+# REFERENCE IMPLEMENTATION - Use as template for other Kyber variants
 #
 # METHOD:
-#   1) Perform a Kyber (ML-KEM-512) key exchange over TCP to derive a shared key.
+#   1) Perform a Kyber (ML-KEM-768) key exchange over TCP to derive a shared key.
 #   2) Use AES-256-GCM with the derived key for UDP MAVLink streams.
 # ==============================================================================
 
@@ -16,7 +16,7 @@ import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from ip_config import *
 
-print("[KYBER-512 GCS] Starting Key Exchange (ML-KEM-512)...")
+print("[KYBER-768 GCS] Starting Key Exchange (ML-KEM-768)...")
 
 import oqs.oqs as oqs
 
@@ -37,17 +37,17 @@ def _send_with_len(conn: socket.socket, data: bytes):
     conn.sendall(len(data).to_bytes(4, 'big'))
     conn.sendall(data)
 
-kem = oqs.KeyEncapsulation("ML-KEM-512")
+kem = oqs.KeyEncapsulation("ML-KEM-768")
 gcs_public_key = kem.generate_keypair()
 
 ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ex_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 ex_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
 ex_sock.listen(1)
-print(f"[KYBER-512 GCS] Waiting on {GCS_HOST}:{PORT_KEY_EXCHANGE}...")
+print(f"[KYBER-768 GCS] Waiting on {GCS_HOST}:{PORT_KEY_EXCHANGE}...")
 while True:
     conn, addr = ex_sock.accept()
-    print(f"[KYBER-512 GCS] Connection from {addr}")
+    print(f"[KYBER-768 GCS] Connection from {addr}")
     try:
         _send_with_len(conn, gcs_public_key)
         ciphertext = _recv_with_len(conn)
@@ -56,7 +56,7 @@ while True:
         conn.close()
         break
     except Exception as e:
-        print(f"[KYBER-512 GCS] Handshake failed for {addr}: {e}")
+        print(f"[KYBER-768 GCS] Handshake failed for {addr}: {e}")
         try:
             conn.close()
         except Exception:
@@ -64,7 +64,7 @@ while True:
         continue
 
 aesgcm = AESGCM(AES_KEY)
-print("✅ [KYBER-512 GCS] Shared key established")
+print("✅ [KYBER-768 GCS] Shared key established")
 
 
 def encrypt_message(plaintext: bytes) -> bytes:
@@ -79,14 +79,14 @@ def decrypt_message(encrypted_message: bytes):
         ct = encrypted_message[NONCE_IV_SIZE:]
         return aesgcm.decrypt(nonce, ct, None)
     except Exception as e:
-        print(f"[KYBER-512 GCS] Decryption failed: {e}")
+        print(f"[KYBER-768 GCS] Decryption failed: {e}")
         return None
 
 
 def drone_to_gcs_thread():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
-    print(f"[KYBER-512 GCS] Listening encrypted TLM on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM}")
+    print(f"[KYBER-768 GCS] Listening encrypted TLM on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM}")
     while True:
         data, _ = sock.recvfrom(65535)
         pt = decrypt_message(data)
@@ -97,7 +97,7 @@ def drone_to_gcs_thread():
 def gcs_to_drone_thread():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
-    print(f"[KYBER-512 GCS] Listening plaintext CMD on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD}")
+    print(f"[KYBER-768 GCS] Listening plaintext CMD on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD}")
     while True:
         data, _ = sock.recvfrom(65535)
         enc = encrypt_message(data)
@@ -105,11 +105,10 @@ def gcs_to_drone_thread():
 
 
 if __name__ == "__main__":
-    print("--- GCS KYBER-512 (ML-KEM-512) PROXY ---")
+    print("--- GCS KYBER-768 (ML-KEM-768) PROXY ---")
     t1 = threading.Thread(target=drone_to_gcs_thread, daemon=True)
     t2 = threading.Thread(target=gcs_to_drone_thread, daemon=True)
     t1.start()
     t2.start()
-    print("READY")
     t1.join()
     t2.join()

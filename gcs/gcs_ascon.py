@@ -1,7 +1,14 @@
 # ==============================================================================
 # gcs_ascon.py
-#
-# GCS-Side Proxy for ASCON-128 AEAD (Authenticated Encryption with Associated Data)
+#if __name__ == "__main__":
+    print("--- GCS ASCON (AEAD) PROXY ---")
+    t1 = threading.Thread(target=drone_to_gcs_thread, daemon=True)
+    t2 = threading.Thread(target=gcs_to_drone_thread, daemon=True)
+    t1.start()
+    t2.start()
+    print("READY")
+    t1.join()
+    t2.join()ide Proxy for ASCON-128 AEAD (Authenticated Encryption with Associated Data)
 # NIST Lightweight Cryptography Winner - 128-bit Security Level
 #
 # METHOD:

@@ -1,7 +1,13 @@
 # ==============================================================================
-# drone_ascon.py
-#
-# Drone-Side Proxy for ASCON-128 AEAD (Authenticated Encryption with Associated Data)
+# drone_ascon.pif __name__ == "__main__":
+    print("--- DRONE ASCON (AEAD) PROXY ---")
+    t1 = threading.Thread(target=telemetry_to_gcs_thread, daemon=True)
+    t2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
+    t1.start()
+    t2.start()
+    print("READY") # Signal to parent process that sockets are listening
+    t1.join()
+    t2.join()Drone-Side Proxy for ASCON-128 AEAD (Authenticated Encryption with Associated Data)
 # NIST Lightweight Cryptography Winner - 128-bit Security Level
 # ==============================================================================
 
