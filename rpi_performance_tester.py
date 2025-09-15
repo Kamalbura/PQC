@@ -300,10 +300,8 @@ class RaspberryPiPerformanceTester:
                     latency = (end_time - start_time) * 1000  # ms
                     latencies.append(latency)
                     
-            except Exception:
-                pass  # Skip failed connections
-                
-        if latencies:
+                except Exception as e:
+                    print(f"Warning: Could not connect to {ip}:{port} - {e}")        if latencies:
             return {
                 'min': min(latencies),
                 'max': max(latencies),

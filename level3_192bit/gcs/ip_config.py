@@ -10,8 +10,8 @@ Algorithms at this level:
 """
 
 # Network Configuration
-GCS_HOST = "127.0.0.1"      # GCS (Ground Control Station) IP
-DRONE_HOST = "127.0.0.1"    # Drone IP
+GCS_HOST = "192.168.0.102"      # GCS (Ground Control Station) IP
+DRONE_HOST = "192.168.0.101"    # Drone IP
 
 # Key Exchange Port (TCP)
 PORT_KEY_EXCHANGE = 5800

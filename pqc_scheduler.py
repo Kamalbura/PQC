@@ -111,6 +111,8 @@ class PQCScheduler:
         
     def _initialize_algorithm_profiles(self) -> Dict[str, AlgorithmProfile]:
         """Initialize comprehensive algorithm performance profiles"""
+        # WARNING: The performance values below are FABRICATED and for placeholder purposes only.
+        # A real implementation MUST use rpi_performance_tester.py to generate these values.
         
         profiles = {
             # NIST Security Level 1 (128-bit)
@@ -119,10 +121,10 @@ class PQCScheduler:
                 security_level=SecurityLevel.LEVEL_1,
                 power_consumption=PowerConsumption.LOW,
                 performance_requirement=PerformanceRequirement.REALTIME,
-                key_exchange_time_ms=2.5,
-                encryption_time_ms=0.15,
-                memory_usage_mb=12.0,
-                cpu_utilization_percent=15.0,
+                key_exchange_time_ms=0.0, # TBD
+                encryption_time_ms=0.0, # TBD
+                memory_usage_mb=0.0, # TBD
+                cpu_utilization_percent=0.0, # TBD
                 public_key_size_bytes=800,
                 private_key_size_bytes=1632,
                 ciphertext_size_bytes=768,

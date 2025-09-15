@@ -75,14 +75,14 @@ class MQTTSecureCommunicator:
         self.heartbeat_thread = None
         self.heartbeat_running = False
         
-    # Heartbeat state
-    self.missed_heartbeats = 0
-    self.max_missed_heartbeats = 5
-    self.last_heartbeat_time = None
-        
         # Connection state
         self.is_connected = False
         self.reconnect_interval = 5.0
+        
+        # Heartbeat state
+        self.missed_heartbeats = 0
+        self.max_missed_heartbeats = 5
+        self.last_heartbeat_time = None
         
         # Available algorithms by security level
         self.algorithms = {
@@ -112,15 +112,13 @@ class MQTTSecureCommunicator:
             key_file_path: Path to client private key
         """
         try:
-            # For testing without certificates, use insecure connection
+            # TLS setup requires all certificate paths.
             if not all([ca_cert_path, cert_file_path, key_file_path]):
-                print("⚠️ Running in insecure mode for testing - no TLS certificates provided")
-                self.broker_port = 1883  # Standard MQTT port without TLS
-                return
+                raise ValueError("TLS certificates not provided. Refusing to connect insecurely.")
                 
             # Configure TLS context
             context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-            context.check_hostname = False
+            context.check_hostname = True
             context.verify_mode = ssl.CERT_REQUIRED
             
             # Load certificates
@@ -135,9 +133,9 @@ class MQTTSecureCommunicator:
             print("🔒 TLS encryption enabled for MQTT communication")
             
         except Exception as e:
-            print(f"⚠️ TLS setup failed: {e}")
-            print("   Falling back to insecure connection for testing")
-            self.broker_port = 1883
+            print(f"CRITICAL: TLS setup failed: {e}. Aborting connection.")
+            # Re-raise or handle as a fatal error. Do not proceed.
+            raise ConnectionError("Failed to establish a secure TLS context.") from e
     
     def connect(self):
         """Connect to MQTT broker with automatic reconnection"""
@@ -315,11 +313,21 @@ class MQTTSecureCommunicator:
             print(f"   Starting: {script_path}")
             self.algorithm_process = subprocess.Popen([
                 "python", script_path
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
-            # Wait briefly to ensure process starts
-            time.sleep(2)
-            
+            # Block until the subprocess signals readiness
+            ready = False
+            try:
+                for line in iter(self.algorithm_process.stdout.readline, ''):
+                    print(f"   [{algorithm} stdout] {line.strip()}")
+                    if "READY" in line:
+                        ready = True
+                        break
+            except Exception as e:
+                print(f"Error reading subprocess stdout: {e}")
+            if not ready:
+                raise RuntimeError(f"Subprocess for {algorithm} failed to signal readiness.")
+
             if self.algorithm_process.poll() is None:  # Process is running
                 self.current_algorithm = algorithm
                 self.current_level = level
