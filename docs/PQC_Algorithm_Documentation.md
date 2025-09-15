@@ -5,6 +5,8 @@
 
 This document provides comprehensive documentation for our Post-Quantum Cryptographic (PQC) implementation targeting secure drone-to-Ground Control Station (GCS) communication. The framework is organized by NIST security levels and optimized for resource-constrained environments like Raspberry Pi 4B.
 
+Important: Performance metrics must be gathered from on-device tests. Any placeholders here should be replaced by results collected using rpi_performance_tester.py on Raspberry Pi hardware.
+
 ---
 
 ## Table of Contents
@@ -240,7 +242,7 @@ Plaintext → AES-256-GCM Encrypt → Network → AES-256-GCM Decrypt → Plaint
 
 ---
 
-## Performance Analysis
+## Performance Analysis (to be measured)
 
 ### Computational Complexity
 
@@ -250,10 +252,11 @@ Plaintext → AES-256-GCM Encrypt → Network → AES-256-GCM Decrypt → Plaint
 | ML-DSA-44 | O(n²) | O(n²) | O(n²) |
 | Falcon-512 | O(n log n) | O(n log n) | O(n log n) |
 
-### Expected Performance Hierarchy
-1. **Fastest**: ML-KEM algorithms (efficient polynomial operations)
-2. **Moderate**: Falcon algorithms (FFT optimization)
-3. **Slowest**: SPHINCS+ algorithms (multiple hash operations)
+### Expected Performance Hierarchy (qualitative)
+Ordering is expected based on known algorithmic structure; confirm empirically on Pi hardware:
+1. ML-KEM variants likely fastest for key exchange
+2. Falcon generally faster verify, slower sign; compact signatures
+3. SPHINCS+ slower due to many hash operations; very conservative security
 
 ---
 
@@ -296,9 +299,12 @@ Plaintext → AES-256-GCM Encrypt → Network → AES-256-GCM Decrypt → Plaint
 
 ### Power Consumption Considerations
 
-- **Computation**: ~2-4W during crypto operations
-- **Network I/O**: ~0.5-1W baseline
-- **Algorithm Impact**: Level 5 algorithms consume 2-3x more power
+Collect on-device using an external meter when possible. Avoid estimating without annotation. Document CPU governor, temperature, and background load.
+
+### Measurement Notes
+- Use rpi_performance_tester.py to produce CSV/JSON outputs.
+- Report mean/p50/p95 and stddev over at least 50 iterations.
+- Keep logs for reproducibility (commit to reports/ with timestamp).
 
 ---
 

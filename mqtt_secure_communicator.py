@@ -4,14 +4,13 @@ MQTT Communication Layer for Drone-GCS PQC Algorithm Switching
 
 This module implements secure MQTT communication with mTLS for:
 - Real-time algorithm switching based on GCS commands
-- DDoS detection heartbeat monitoring
+- Heartbeat liveness monitoring
 - Secure command/telemetry routing
 - Priority-based message handling
 
 Features:
 - Topic-based algorithm selection: crypto/algorithm
 - Heartbeat monitoring: crypto/heartbeat  
-- DDoS alert propagation: crypto/ddos_alert
 - QoS levels for reliability during attacks
 - Connection resilience and automatic reconnection
 
@@ -36,7 +35,6 @@ class MQTTTopics:
     """MQTT topic definitions for secure drone-GCS communication"""
     ALGORITHM_SWITCH = "crypto/algorithm"
     HEARTBEAT = "crypto/heartbeat"  
-    DDOS_ALERT = "crypto/ddos_alert"
     SYSTEM_STATUS = "crypto/status"
     PERFORMANCE_METRICS = "crypto/metrics"
 
@@ -77,11 +75,10 @@ class MQTTSecureCommunicator:
         self.heartbeat_thread = None
         self.heartbeat_running = False
         
-        # DDoS detection state
-        self.ddos_detected = False
-        self.missed_heartbeats = 0
-        self.max_missed_heartbeats = 5
-        self.last_heartbeat_time = None
+    # Heartbeat state
+    self.missed_heartbeats = 0
+    self.max_missed_heartbeats = 5
+    self.last_heartbeat_time = None
         
         # Connection state
         self.is_connected = False
@@ -197,7 +194,6 @@ class MQTTSecureCommunicator:
             if self.is_drone:
                 # Drone subscribes to algorithm switch commands from GCS
                 client.subscribe(MQTTTopics.ALGORITHM_SWITCH, qos=2)  # Exactly once delivery
-                client.subscribe(MQTTTopics.DDOS_ALERT, qos=1)       # At least once delivery
             else:
                 # GCS subscribes to heartbeats and status updates from drone
                 client.subscribe(MQTTTopics.HEARTBEAT, qos=1)
@@ -256,8 +252,7 @@ class MQTTSecureCommunicator:
             elif topic == MQTTTopics.HEARTBEAT and not self.is_drone:
                 self._handle_heartbeat_received(payload)
                 
-            elif topic == MQTTTopics.DDOS_ALERT:
-                self._handle_ddos_alert(payload)
+            
                 
             elif topic == MQTTTopics.SYSTEM_STATUS:
                 self._handle_system_status(payload)
@@ -399,14 +394,13 @@ class MQTTSecureCommunicator:
                             print(f"⚠️ Missed heartbeat #{self.missed_heartbeats} (last: {time_since_last})")
                             
                             if self.missed_heartbeats >= self.max_missed_heartbeats:
-                                if not self.ddos_detected:
-                                    self._detect_ddos_by_heartbeat()
+                                # Excessive missed heartbeats indicate a connectivity issue
                         else:
                             # Reset counter if heartbeat received
                             if self.missed_heartbeats > 0:
                                 print("✅ Heartbeat restored")
                                 self.missed_heartbeats = 0
-                                self.ddos_detected = False
+                                # Connection restored
                     
                     time.sleep(self.heartbeat_interval)
                     
@@ -427,52 +421,13 @@ class MQTTSecureCommunicator:
             # Reset missed heartbeat counter
             if self.missed_heartbeats > 0:
                 self.missed_heartbeats = 0
-                self.ddos_detected = False
+                # Reset liveness state on start
                 print("✅ Heartbeat connection restored")
                 
         except json.JSONDecodeError as e:
             print(f"❌ Invalid heartbeat JSON: {e}")
     
-    def _detect_ddos_by_heartbeat(self):
-        """Detect DDoS attack based on missed heartbeats"""
-        self.ddos_detected = True
-        
-        alert = {
-            "alert_type": "ddos_heartbeat_timeout",
-            "timestamp": datetime.now().isoformat(),
-            "missed_heartbeats": self.missed_heartbeats,
-            "detection_method": "heartbeat_monitoring",
-            "severity": "high"
-        }
-        
-        print(f"🚨 DDoS detected via heartbeat timeout: {self.missed_heartbeats} missed")
-        
-        # Broadcast DDoS alert
-        self.client.publish(
-            MQTTTopics.DDOS_ALERT,
-            json.dumps(alert),
-            qos=2  # Exactly once delivery for critical alerts
-        )
     
-    def _handle_ddos_alert(self, payload):
-        """Handle DDoS alert from detection system"""
-        try:
-            alert = json.loads(payload)
-            alert_type = alert.get('alert_type', 'unknown')
-            severity = alert.get('severity', 'medium')
-            
-            print(f"🚨 DDoS Alert: {alert_type} (Severity: {severity})")
-            
-            # Implement DDoS response based on severity
-            if severity == 'high':
-                # Switch to maximum security algorithm
-                if self.current_level != SecurityLevel.LEVEL_5:
-                    print("🔒 Switching to Level 5 security due to DDoS attack")
-                    # Auto-switch to strongest algorithm
-                    self._switch_algorithm("ML-KEM-1024", SecurityLevel.LEVEL_5)
-            
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid DDoS alert JSON: {e}")
     
     def _send_status_update(self, status_type, data):
         """Send system status update to GCS"""

@@ -4,7 +4,7 @@
 
 This research presents a comprehensive post-quantum cryptographic (PQC) security framework specifically designed for unmanned aerial vehicle (UAV) communications in resource-constrained environments. As quantum computing advances threaten current cryptographic standards, this work addresses the critical need for quantum-resistant security in drone-ground station communications while optimizing for power consumption, computational efficiency, and real-time operational requirements on Raspberry Pi 4B platforms.
 
-The framework implements a novel multi-tier architecture incorporating NIST-standardized PQC algorithms organized by security levels, an intelligent priority-based scheduler for dynamic algorithm selection, secure MQTT communication protocols with mutual TLS (mTLS), and a two-tier DDoS detection system. Our comprehensive evaluation demonstrates the practical feasibility of deploying PQC algorithms in UAV systems while maintaining operational requirements for latency, power consumption, and computational overhead.
+The framework implements a multi-tier architecture incorporating NIST-standardized PQC algorithms organized by security levels, an intelligent priority-based scheduler for dynamic algorithm selection, and secure MQTT communication protocols with mutual TLS (mTLS). Note: DDoS detection components are out of scope for this repository version and intentionally omitted per project direction.
 
 ## 1. Introduction
 
@@ -28,7 +28,7 @@ This research makes several significant contributions to the field of secure UAV
 1. **NIST Security Level Framework**: Systematic organization of PQC algorithms by security levels (128-bit, 192-bit, 256-bit) with comprehensive performance analysis
 2. **Adaptive Scheduler Design**: Intelligent algorithm selection based on threat level, power budget, and performance requirements
 3. **Secure Communication Protocol**: MQTT-based real-time algorithm switching with mTLS authentication
-4. **Multi-tier Security Defense**: Integrated DDoS detection system for enhanced network security
+4. **Operational Security Practices**: Heartbeat monitoring via MQTT and robust error handling
 5. **Raspberry Pi Implementation**: Practical deployment on resource-constrained hardware with detailed performance metrics
 
 ## 2. Literature Review
@@ -185,36 +185,19 @@ Algorithm Switching:
 3. Synchronized switch occurs at predetermined timestamp
 ```
 
-### 3.4 Two-Tier DDoS Detection System
+### 3.4 Measurement and Evaluation Plan
 
-#### 3.4.1 Tier 1: Lightweight XGBoost Detection
+To ensure scientific rigor, all performance numbers must be measured on-target hardware (Raspberry Pi 4B) using the provided tooling. This project intentionally avoids fabricated metrics.
 
-The first tier implements real-time anomaly detection using XGBoost:
+Measurement tooling:
+- rpi_performance_tester.py: runs crypto proxies and reports key-exchange latency, encrypt/decrypt timing, memory, CPU, and end-to-end latency.
+- tests/test_pqc_*.py: validation of algorithm round-trips and message flow.
 
-**Feature Extraction**:
-- Packet rate and byte rate statistics
-- Connection count monitoring  
-- CPU and memory utilization
-- Statistical variance analysis
-
-**Performance Requirements**:
-- Sub-millisecond inference time
-- Low memory footprint (<10MB)
-- Continuous operation without interruption
-
-#### 3.4.2 Tier 2: Time Series Transformer Confirmation
-
-When Tier 1 detects anomalies, Tier 2 provides confirmation:
-
-**Time Series Analysis**:
-- 60-sample sequence analysis
-- Transformer-based pattern recognition
-- Temporal correlation detection
-
-**Confirmation Criteria**:
-- Statistical trend analysis
-- Sustained anomaly patterns
-- Resource exhaustion indicators
+Protocol:
+1) Deploy drone/gcs proxy pair for the algorithm under test.
+2) Run rpi_performance_tester.py with the appropriate flags.
+3) Collect multiple samples (min N=50) and report mean, p50, p95 with stddev.
+4) Record hardware, OS image, governor settings, ambient temperature.
 
 ### 3.5 Experimental Setup
 
@@ -250,95 +233,42 @@ When Tier 1 detects anomalies, Tier 2 provides confirmation:
 - Idle vs. active power consumption
 - Battery life projection under various workloads
 
-## 4. Results and Analysis
+## 4. Results and Analysis (TBD from on-device runs)
 
-### 4.1 Algorithm Performance Comparison
+### 4.1 Algorithm Performance Comparison (placeholders)
 
 #### 4.1.1 Key Generation Performance
 
-| Algorithm | Security Level | Key Gen Time (ms) | Public Key Size (bytes) | Private Key Size (bytes) |
-|-----------|---------------|-------------------|-------------------------|--------------------------|
-| ML-KEM-512 | Level 1 | 0.12 | 800 | 1632 |
-| ML-KEM-768 | Level 3 | 0.18 | 1184 | 2400 |
-| ML-KEM-1024 | Level 5 | 0.24 | 1568 | 3168 |
-| Falcon-512 | Level 1 | 2.3 | 897 | 1281 |
-| Falcon-1024 | Level 5 | 4.1 | 1793 | 2305 |
+TBD. Collect using rpi_performance_tester.py and record per algorithm:
+- keypair time (ms), public/private key sizes (bytes), memory peak (MB).
 
 #### 4.1.2 Encryption/Decryption Performance
 
-| Algorithm | Encryption Time (μs) | Decryption Time (μs) | Throughput (MB/s) |
-|-----------|---------------------|---------------------|-------------------|
-| ML-KEM-512 | 45 | 67 | 89.2 |
-| ML-KEM-768 | 68 | 89 | 71.4 |
-| ML-KEM-1024 | 91 | 112 | 58.7 |
-| ASCON-128 | 12 | 13 | 195.3 |
-| Camellia-192 | 18 | 19 | 167.8 |
+TBD. Report p50/p95 encrypt/decrypt times (μs) and sustained throughput (MB/s) per message size.
 
-### 4.2 Power Consumption Analysis
+### 4.2 Power Consumption Analysis (TBD)
 
 #### 4.2.1 Power Consumption by Algorithm
 
-| Algorithm | Idle Power (W) | Active Power (W) | Energy per Operation (mJ) |
-|-----------|---------------|------------------|---------------------------|
-| ML-KEM-512 | 2.1 | 3.8 | 0.023 |
-| ML-KEM-768 | 2.1 | 4.2 | 0.031 |
-| ML-KEM-1024 | 2.1 | 4.7 | 0.041 |
-| Falcon-512 | 2.1 | 5.2 | 0.156 |
-| Falcon-1024 | 2.1 | 6.1 | 0.289 |
-
-**Key Findings**:
-- Network I/O dominates power consumption (87% of total crypto-related power)
-- ML-KEM variants show excellent power efficiency
-- Falcon algorithms require significantly more computational power
+TBD. Use a power meter where available; otherwise estimate using CPU utilization × TDP proxy and annotate assumptions.
 
 #### 4.2.2 Battery Life Projections
 
-Based on a typical 5000mAh drone battery at 11.1V nominal voltage:
+TBD. Provide projections only after empirical power numbers are collected; document battery capacity and assumptions.
 
-| Security Level | Continuous Operation | Mission Duration (8h flight) | Standby Time |
-|---------------|---------------------|------------------------------|--------------|
-| Level 1 | 14.6 hours | 97% battery remaining | 23.8 hours |
-| Level 3 | 13.2 hours | 95% battery remaining | 21.4 hours |
-| Level 5 | 11.8 hours | 92% battery remaining | 18.9 hours |
-
-### 4.3 Network Performance Analysis
+### 4.3 Network Performance Analysis (TBD)
 
 #### 4.3.1 Latency Measurements
 
-| Message Type | Classical (ms) | Level 1 PQC (ms) | Level 3 PQC (ms) | Level 5 PQC (ms) |
-|--------------|---------------|------------------|------------------|------------------|
-| Telemetry | 2.3 | 2.8 | 3.1 | 3.7 |
-| Commands | 1.9 | 2.4 | 2.7 | 3.2 |
-| Heartbeat | 0.8 | 1.1 | 1.3 | 1.6 |
-
-**Analysis**: PQC adds minimal latency overhead, well within acceptable limits for UAV operations.
+TBD. Measure end-to-end latency with plaintext baseline vs PQC proxies under identical conditions.
 
 #### 4.3.2 MQTT Performance
 
-| Metric | Value | Standard Deviation |
-|--------|-------|-------------------|
-| Message Delivery Rate | 99.97% | 0.02% |
-| Average Reconnection Time | 1.23s | 0.34s |
-| Heartbeat Miss Rate | 0.03% | 0.01% |
+TBD. Capture delivery rate, reconnection time, and missed-heartbeat rate from logs.
 
-### 4.4 DDoS Detection Performance
+### 4.4 Operational Observations
 
-#### 4.4.1 Detection Accuracy
-
-| Attack Type | Tier 1 Detection Rate | Tier 2 Confirmation Rate | False Positive Rate |
-|-------------|----------------------|---------------------------|-------------------|
-| UDP Flood | 94.2% | 97.8% | 2.1% |
-| TCP SYN Flood | 91.7% | 95.3% | 3.4% |
-| ICMP Flood | 89.3% | 93.6% | 1.8% |
-| Port Scan | 87.1% | 91.2% | 4.2% |
-
-#### 4.4.2 Resource Overhead
-
-| Component | CPU Usage | Memory Usage | Detection Latency |
-|-----------|-----------|--------------|-------------------|
-| Tier 1 XGBoost | 1.2% | 8.4 MB | 0.34 ms |
-| Tier 2 TST | 3.7% | 24.1 MB | 12.7 ms |
-| Combined System | 4.9% | 32.5 MB | 13.04 ms |
+TBD. Summarize qualitative findings (stability, failure modes, recovery behavior) from Pi runs.
 
 ### 4.5 Scheduler Performance
 
@@ -449,7 +379,7 @@ This research successfully demonstrates the practical feasibility of implementin
 1. **Systematic PQC Implementation**: Successfully organized and implemented NIST-standardized PQC algorithms across three security levels
 2. **Intelligent Algorithm Selection**: Developed priority-based scheduler that optimizes security-performance-power trade-offs
 3. **Secure Communication Protocol**: Implemented robust MQTT-based communication with real-time algorithm switching
-4. **Comprehensive Security**: Integrated multi-tier DDoS detection with cryptographic security measures
+4. **Comprehensive Security**: PQC key exchange + AEAD data protection with authenticated MQTT control plane
 5. **Practical Deployment**: Validated implementation on Raspberry Pi 4B hardware with detailed performance analysis
 
 ### 6.2 Scientific Contributions
