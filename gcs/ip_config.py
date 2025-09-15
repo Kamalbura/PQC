@@ -16,9 +16,9 @@
 
 # --- HOST ADDRESSES ---
 # Updated 2023-09-13 GCS_HOST = "192.168.0.104"
-GCS_HOST = "127.0.0.1"    # Localhost for single-machine testing
+GCS_HOST = "192.168.0.102"    # Localhost for single-machine testing
 # Updated 2023-09-13 DRONE_HOST = "192.168.0.101" 
-DRONE_HOST = "127.0.0.1"  # Localhost for single-machine testing
+DRONE_HOST = "192.168.0.101"  # Localhost for single-machine testing
 
 # --- DRONE ID ---
 DRONE_ID = "drone1"
