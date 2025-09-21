@@ -20,8 +20,8 @@
 
 # --- HOST ADDRESSES ---
 # Change these when you move from local testing to a real network.
-GCS_HOST = "192.168.0.102"    # Localhost for single-machine testing
-DRONE_HOST = "192.168.0.101"  # Localhost for single-machine testing
+GCS_HOST = "192.168.0.104"    # Localhost for single-machine testing
+DRONE_HOST = "192.168.0.102"  # Localhost for single-machine testing
 
 # --- DRONE ID ---
 # Stable identifier for this drone used in MQTT topics and certificate filenames.

@@ -1,0 +1,15 @@
+Created single-port proxy common module and wrapper scripts.
+
+Files added:
+- singleport_common.py  — shared implementation (key exchange, AES-GCM framing, single public socket)
+- sdrone/*             — wrappers for drone-side algorithms calling singleport_common.run_proxy
+- sgcs/*               — wrappers for gcs-side algorithms calling singleport_common.run_proxy
+
+Next steps:
+1. Install dependencies: cryptography, liboqs (optional but recommended).
+2. Test loopback using one algo: e.g., run sgcs/gcs_kyber_512.py and sdrone/drone_kyber_512.py on localhost.
+3. Iterate on algorithm-specific kem names or mapping if needed.
+
+Notes:
+- Wrappers are minimal intentionally — all shared logic is in singleport_common.py.
+- The current key-exchange tries liboqs first then falls back to a random-derived key (logged).
