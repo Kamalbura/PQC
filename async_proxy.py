@@ -99,8 +99,16 @@ async def run_proxy_async(role: str, algo: str,
                 if not data.startswith(MAGIC_BYTES):
                     print(f'[{prefix}] dropping non-magic packet from {addr} len={len(data)} prefix={data[:8].hex()}')
                     continue
-                # Decrypt in executor to avoid blocking
-                plaintext = await loop.run_in_executor(None, decrypt_message, None, aes_key, data)
+                # Decrypt in executor to avoid blocking; handle cancellation cleanly
+                try:
+                    plaintext = await loop.run_in_executor(None, decrypt_message, None, aes_key, data)
+                except asyncio.CancelledError:
+                    # shutting down
+                    print(f'[{prefix}] public_recv_loop decrypt cancelled')
+                    break
+                except Exception as e:
+                    print(f'[{prefix}] decrypt executor error', e)
+                    continue
                 if plaintext is None:
                     print(f'[{prefix}] decrypt failed from {addr}; cipher-prefix={data[:16].hex()}')
                     continue
@@ -119,7 +127,14 @@ async def run_proxy_async(role: str, algo: str,
                 data, addr = await loop.sock_recvfrom(local_in_sock, BUFFER_SIZE)
                 print(f'[{prefix}] local_recv_loop received {len(data)} bytes from {addr}')
                 # encrypt in executor (encrypt_message prefixes MAGIC_BYTES)
-                encrypted = await loop.run_in_executor(None, encrypt_message, None, aes_key, data)
+                try:
+                    encrypted = await loop.run_in_executor(None, encrypt_message, None, aes_key, data)
+                except asyncio.CancelledError:
+                    print(f'[{prefix}] local_recv_loop encrypt cancelled')
+                    break
+                except Exception as e:
+                    print(f'[{prefix}] encrypt executor error', e)
+                    continue
                 addr_remote = session.get('addr')
                 print(f'[{prefix}] current remote addr={addr_remote} last_seen={session.get("last_seen")}')
                 if addr_remote is None or (time.time() - session.get('last_seen', 0)) > 120:
@@ -136,8 +151,19 @@ async def run_proxy_async(role: str, algo: str,
     # seed with a probe to help establish session mapping
     try:
         # send a valid encrypted empty payload (encrypt_message prefixes MAGIC_BYTES)
-        probe_ct = await loop.run_in_executor(None, encrypt_message, None, aes_key, b'')
-        await loop.sock_sendto(public_sock, probe_ct, (gcs_host, 5811 if role == 'gcs' else 5821))
+        try:
+            probe_ct = await loop.run_in_executor(None, encrypt_message, None, aes_key, b'')
+        except asyncio.CancelledError:
+            probe_ct = None
+        except Exception as e:
+            print(f'[{prefix}] probe encrypt error', e)
+            probe_ct = None
+        if probe_ct:
+            try:
+                await loop.sock_sendto(public_sock, probe_ct, (gcs_host, 5811 if role == 'gcs' else 5821))
+            except Exception:
+                # best-effort send; ignore
+                pass
     except Exception:
         pass
 
