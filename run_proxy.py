@@ -48,6 +48,7 @@ def parse_args():
     p.add_argument('--algo', required=True, help='algorithm name (e.g., dilithium3, k768, ascon)')
     p.add_argument('--mode', choices=['proxy', 'benchmark', 'rl-inference'], default='proxy')
     p.add_argument('--duration', type=int, default=30, help='benchmark duration (seconds)')
+    p.add_argument('--public-host', default=None, help='Optional override for public bind host (useful for loopback testing)')
     p.add_argument('--local-in-port', type=int, default=None)
     p.add_argument('--local-out-port', type=int, default=None)
     p.add_argument('--gcs-host', default='127.0.0.1')
@@ -186,14 +187,14 @@ def main():
     args = parse_args()
 
     if args.role == 'gcs':
-        public_host = GCS_HOST
+        public_host = args.public_host or GCS_HOST
         public_port = PORT_GCS_LISTEN_ENCRYPTED_TLM
         remote_host = DRONE_HOST
         # local ports
         local_in = args.local_in_port or PORT_GCS_LISTEN_PLAINTEXT_CMD
         local_out = args.local_out_port or PORT_GCS_FORWARD_DECRYPTED_TLM
     else:
-        public_host = DRONE_HOST
+        public_host = args.public_host or DRONE_HOST
         public_port = PORT_DRONE_LISTEN_ENCRYPTED_CMD
         remote_host = GCS_HOST
         # Correct drone local mapping: local_in is where proxy listens for plaintext from local app
