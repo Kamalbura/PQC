@@ -44,8 +44,9 @@ except Exception:
 
 def parse_args():
     p = argparse.ArgumentParser(description='Unified CEREBRUS Security Proxy')
-    p.add_argument('--role', choices=['gcs', 'drone'], required=True)
-    p.add_argument('--algo', required=True, help='algorithm name (e.g., dilithium3, k768, ascon)')
+    p.add_argument('--role', choices=['gcs', 'drone'], required=False,
+                   help='Role of this instance. If omitted, the script will try to auto-detect using values from ip_config.')
+    p.add_argument('--algo', required=False, help='algorithm name (e.g., dilithium3, k768, ascon). If omitted, the script will pick a sensible default.')
     p.add_argument('--mode', choices=['proxy', 'benchmark', 'rl-inference'], default='proxy')
     p.add_argument('--duration', type=int, default=30, help='benchmark duration (seconds)')
     p.add_argument('--public-host', default=None, help='Optional override for public bind host (useful for loopback testing)')
@@ -184,7 +185,83 @@ def _parse_perf_log(log_file: str, algo_name: str, duration: int):
 
 
 def main():
+    import socket
+
     args = parse_args()
+
+    # Auto-select algorithm if not provided
+    if not args.algo:
+        # Priority: environment variable DEFAULT_ALGO, then prefer k768 if present, else pick first from drone/ folder
+        default_algo = os.environ.get('DEFAULT_ALGO')
+        if default_algo:
+            args.algo = default_algo
+            print(f'[auto-select] using DEFAULT_ALGO from env: {args.algo}')
+        else:
+            # prefer k768
+            candidates = []
+            try:
+                for fn in os.listdir(os.path.join(ROOT, 'drone')):
+                    if fn.startswith('drone_') and fn.endswith('.py'):
+                        candidates.append(fn.replace('drone_', '').replace('.py', ''))
+            except Exception:
+                pass
+            if 'k768' in candidates:
+                args.algo = 'k768'
+            elif candidates:
+                args.algo = candidates[0]
+            else:
+                args.algo = 'k768'  # last-resort fallback
+            print(f'[auto-select] selected algorithm: {args.algo}')
+
+    def _resolve_host_ip(hostname):
+        try:
+            return socket.gethostbyname(hostname)
+        except Exception:
+            return None
+
+    def _guess_role_from_local(gcs_host, drone_host):
+        # Gather likely local IPs
+        candidates = set()
+        try:
+            # primary outbound IP (works even without external connectivity for many setups)
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect((gcs_host or '8.8.8.8', 80))
+                candidates.add(s.getsockname()[0])
+            finally:
+                s.close()
+        except Exception:
+            pass
+        try:
+            candidates.add(socket.gethostbyname(socket.gethostname()))
+        except Exception:
+            pass
+        candidates.add('127.0.0.1')
+
+        # resolve configured hosts
+        gcs_ip = _resolve_host_ip(gcs_host) if gcs_host else None
+        drone_ip = _resolve_host_ip(drone_host) if drone_host else None
+
+        # Compare
+        if gcs_ip and gcs_ip in candidates:
+            return 'gcs'
+        if drone_ip and drone_ip in candidates:
+            return 'drone'
+
+        # Not sure
+        return None
+
+    # If role not provided, attempt to infer from ip_config constants
+    if not args.role:
+        guessed = _guess_role_from_local(GCS_HOST, DRONE_HOST)
+        if guessed:
+            print(f'[auto-detect] inferred role={guessed} from local host IP')
+            args.role = guessed
+        else:
+            print('[auto-detect] could not determine role from local IPs. Please pass --role gcs|drone or set appropriate ip_config values.')
+            # fall back to 'drone' to preserve backward compatibility for scripts that expect a default
+            args.role = 'drone'
+            print('[auto-detect] defaulting to role=drone')
 
     if args.role == 'gcs':
         public_host = args.public_host or GCS_HOST
