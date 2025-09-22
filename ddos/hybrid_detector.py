@@ -1,4 +1,3 @@
-
 import time
 import os
 import sys
@@ -12,7 +11,7 @@ import torch
 import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 
-from tstplus import TSTPlus
+from tstplus import TSTPlus, _TSTBackbone, _TSTEncoder, _TSTEncoderLayer
 
 # --- Scapy for Packet Sniffing ---
 try:
@@ -82,7 +81,7 @@ def xgboost_screener_thread(buffer, buffer_lock, xgboost_queue, tst_queue):
 
     while True:
         # Get the latest 5 data points from the collector
-        data_point = xgboost_queue.get() 
+        data_point = xgboost_queue.get()
         
         # Reshape for prediction
         data_point_np = np.array(data_point).reshape(1, -1)

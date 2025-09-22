@@ -1,4 +1,3 @@
-
 import time
 import os
 import sys
@@ -11,7 +10,7 @@ import torch
 import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
 
-from tstplus import TSTPlus
+from tstplus import TSTPlus, _TSTBackbone, _TSTEncoder, _TSTEncoderLayer
 
 # --- Scapy for Packet Sniffing ---
 try:
@@ -54,10 +53,8 @@ def collector_thread(buffer, buffer_lock):
     sniffer.start()
     print("[Collector] Sniffer is running.")
 
-    last_time = time.time()
     while True:
-        time.sleep(WINDOW_SIZE)
-        last_time = time.time()
+        time.sleep(WINDOW_SIZE) 
         
         # Count packets that arrived in the last window
         count = len(packet_timestamps)
@@ -65,7 +62,6 @@ def collector_thread(buffer, buffer_lock):
 
         with buffer_lock:
             buffer.append(count)
-            # print(f"Buffer size: {len(buffer)}") # Optional: for debugging
 
 # --- Thread 2: User Input Controller ---
 def input_controller_thread(config, lock):
