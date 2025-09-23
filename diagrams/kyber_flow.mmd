@@ -1,0 +1,114 @@
+graph TB
+    %% Kyber-768 Post-Quantum Key Encapsulation Flow Diagram
+    %% Research Paper Quality - Post-Quantum Algorithm c6
+    
+    classDef droneNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef gcsNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef pqcOp fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px,color:#000
+    classDef aesOp fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef keyExchange fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef portNode fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+
+    subgraph INITIALIZATION ["🔐 Key Exchange Phase (TCP Port 5800)"]
+        subgraph DRONE_KEX ["Drone Key Exchange"]
+            D_KEM[Kyber-768 KEM<br/>Client Mode]:::pqcOp
+            D_CONNECT[Connect to GCS<br/>TCP 5800<br/>Retry Logic: 30 attempts]:::droneNode
+            D_ENCAP[Encapsulate Secret<br/>Input: GCS Public Key<br/>Output: Ciphertext + Shared Secret]:::pqcOp
+            D_DERIVE[Derive AES Key<br/>SHA-256(shared_secret)<br/>Output: 32-byte AES key]:::keyExchange
+        end
+        
+        subgraph GCS_KEX ["GCS Key Exchange"]
+            G_KEM[Kyber-768 KEM<br/>Server Mode]:::pqcOp
+            G_LISTEN[Listen TCP 5800<br/>Accept Connections<br/>Timeout: 10 seconds]:::gcsNode
+            G_KEYGEN[Generate Keypair<br/>Output: Public Key + Secret Key]:::pqcOp
+            G_DECAP[Decapsulate Secret<br/>Input: Ciphertext<br/>Output: Shared Secret]:::pqcOp
+            G_DERIVE[Derive AES Key<br/>SHA-256(shared_secret)<br/>Output: 32-byte AES key]:::keyExchange
+        end
+        
+        %% Key Exchange Flow
+        D_CONNECT --> G_LISTEN
+        G_KEYGEN --> G_LISTEN
+        G_LISTEN -->|Send Public Key| D_KEM
+        D_KEM --> D_ENCAP
+        D_ENCAP -->|Send Ciphertext| G_DECAP
+        D_DERIVE -.->|Same Key| G_DERIVE
+    end
+
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE - Kyber-768 Implementation"]
+        FC[Flight Controller<br/>MAVLink Source]:::droneNode
+        
+        subgraph DRONE_CRYPTO ["drone_kyber_768.py Process"]
+            D_READY[Crypto Ready Event<br/>Wait for Key Exchange]:::droneNode
+            D_LISTEN[Listen Thread<br/>Port 5820<br/>Plaintext Telemetry]:::droneNode
+            D_AES_ENC[AES-256-GCM Encrypt<br/>Key: Derived from Kyber<br/>Nonce: 12 random bytes<br/>Output: nonce || ciphertext]:::aesOp
+            D_SEND[Send Thread<br/>Port 5821<br/>Encrypted Telemetry]:::droneNode
+            
+            D_RECV[Receive Thread<br/>Port 5811<br/>Encrypted Commands]:::droneNode
+            D_AES_DEC[AES-256-GCM Decrypt<br/>Extract: nonce, ciphertext<br/>Verify & Decrypt<br/>Output: plaintext or None]:::aesOp
+            D_FORWARD[Forward Thread<br/>Port 5812<br/>Decrypted Commands]:::droneNode
+        end
+    end
+
+    subgraph NETWORK ["🌐 Network Layer"]
+        P5800[Port 5800<br/>TCP Key Exchange]:::portNode
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::portNode
+        P5821[Port 5821<br/>GCS Encrypted TLM]:::portNode
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::portNode
+        P5811[Port 5811<br/>Drone Encrypted CMD]:::portNode
+        P5812[Port 5812<br/>Drone Decrypted CMD]:::portNode
+        P5822[Port 5822<br/>GCS Decrypted TLM]:::portNode
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE - Kyber-768 Implementation"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]:::gcsNode
+        
+        subgraph GCS_CRYPTO ["gcs_kyber_768.py Process"]
+            G_READY[Crypto Ready Event<br/>Wait for Key Exchange]:::gcsNode
+            G_LISTEN_TLM[Listen Thread<br/>Port 5821<br/>Encrypted Telemetry]:::gcsNode
+            G_AES_DEC[AES-256-GCM Decrypt<br/>Extract: nonce, ciphertext<br/>Verify & Decrypt<br/>Output: plaintext or None]:::aesOp
+            G_FORWARD_TLM[Forward Thread<br/>Port 5822<br/>Decrypted Telemetry]:::gcsNode
+            
+            G_LISTEN_CMD[Listen Thread<br/>Port 5810<br/>Plaintext Commands]:::gcsNode
+            G_AES_ENC[AES-256-GCM Encrypt<br/>Key: Derived from Kyber<br/>Nonce: 12 random bytes<br/>Output: nonce || ciphertext]:::aesOp
+            G_SEND[Send Thread<br/>Port 5811<br/>Encrypted Commands]:::gcsNode
+        end
+    end
+
+    %% Key Exchange Connections
+    D_DERIVE --> P5800
+    P5800 --> G_DERIVE
+
+    %% Data Flow - Telemetry Path (Drone → GCS)
+    FC -->|MAVLink Telemetry| P5820
+    P5820 --> D_READY
+    D_READY --> D_LISTEN
+    D_LISTEN --> D_AES_ENC
+    D_AES_ENC --> D_SEND
+    D_SEND -->|UDP Encrypted| P5821
+    P5821 --> G_READY
+    G_READY --> G_LISTEN_TLM
+    G_LISTEN_TLM --> G_AES_DEC
+    G_AES_DEC --> G_FORWARD_TLM
+    G_FORWARD_TLM -->|MAVLink Telemetry| P5822
+    P5822 --> GCS_APP
+
+    %% Data Flow - Command Path (GCS → Drone)
+    GCS_APP -->|MAVLink Commands| P5810
+    P5810 --> G_LISTEN_CMD
+    G_LISTEN_CMD --> G_AES_ENC
+    G_AES_ENC --> G_SEND
+    G_SEND -->|UDP Encrypted| P5811
+    P5811 --> D_RECV
+    D_RECV --> D_AES_DEC
+    D_AES_DEC --> D_FORWARD
+    D_FORWARD -->|MAVLink Commands| P5812
+    P5812 --> FC
+
+    %% Algorithm Details
+    subgraph ALGO_DETAILS ["📋 Kyber-768 Algorithm Details"]
+        SPECS["🔐 ML-KEM-768 Specifications<br/>• Type: Key Encapsulation Mechanism (KEM)<br/>• Security Level: NIST Level 3 (192-bit equivalent)<br/>• Public Key: 1184 bytes<br/>• Ciphertext: 1088 bytes<br/>• Shared Secret: 32 bytes<br/>• Standard: NIST FIPS 203 (ML-KEM)<br/>• Variant: Kyber-768 (c6 in research paper)"]:::pqcOp
+        
+        IMPL["⚙️ Implementation Details<br/>• Library: oqs.oqs (liboqs-python)<br/>• Key Exchange: TCP handshake on port 5800<br/>• Transport: AES-256-GCM with derived key<br/>• Thread Sync: crypto_ready.Event()<br/>• Error Handling: Connection retry with exponential backoff<br/>• Frame Format: [12-byte nonce][AES-GCM ciphertext]"]:::aesOp
+        
+        SECURITY["🛡️ Security Properties<br/>• Post-Quantum Security: Resistant to quantum attacks<br/>• Forward Secrecy: New session key per connection<br/>• Authentication: AES-GCM provides authenticity<br/>• Key Derivation: SHA-256 for uniform distribution<br/>• Replay Protection: Nonce-based encryption"]:::keyExchange
+    end

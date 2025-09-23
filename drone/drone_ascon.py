@@ -1,111 +1,123 @@
 # ==============================================================================
-# drone_ascon.pif __name__ == "__main__":
-    print("--- DRONE ASCON (AEAD) PROXY ---")
-    t1 = threading.Thread(target=telemetry_to_gcs_thread, daemon=True)
-    t2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
-    t1.start()
-    t2.start()
-    print("READY") # Signal to parent process that sockets are listening
-    t1.join()
-    t2.join()Drone-Side Proxy for ASCON-128 AEAD (Authenticated Encryption with Associated Data)
-# NIST Lightweight Cryptography Winner - 128-bit Security Level
+# drone_ascon.py
+#
+# Drone-Side Proxy for ASCON-128 Cryptography
+#
+# PURPOSE:
+#   - Listens for plaintext MAVLink telemetry from the flight controller.
+#   - Encrypts it using ASCON-128.
+#   - Sends the encrypted telemetry to the GCS.
+#   - Listens for encrypted commands from the GCS.
+#   - Decrypts them using ASCON-128.
+#   - Forwards the plaintext commands to the flight controller.
+#
+# DEPENDENCIES:
+#   - pycryptodome (pip install pycryptodome)
+#   - ip_config.py (must be in the same directory or Python path)
+#
+# HOW TO RUN:
+#   This script should be run on the drone's companion computer.
+#   python drone_ascon.py
 # ==============================================================================
 
 import socket
 import threading
 import os
 import time
-try:
-    import ascon
-    USING_ASCON = True
-except ImportError:
-    print("[WARNING] ascon not found, using AES-GCM fallback")
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    USING_ASCON = False
-
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from drneha.ascon.ascon import ascon_encrypt, ascon_decrypt
 from ip_config import *
 
-print("[ASCON Drone] Starting Key Exchange...")
+## 1. CONFIGURATION ##
 
-# Use simple key exchange for symmetric algorithm (normally would use Kyber for real deployment)
-ex_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-while True:
+# SECURITY WARNING: Must match GCS. ASCON-128: 16-byte key
+# Exactly 16 bytes - hardcoded for research
+PSK_ASCON = b'ThisIsA16ByteKey'
+ASCON_NONCE_SIZE = 16
+
+## 2. CRYPTOGRAPHY FUNCTIONS ##
+
+def encrypt_message(plaintext):
+    """Encrypts using ASCON-128, framing [nonce16 || ct||tag]."""
+    nonce = os.urandom(ASCON_NONCE_SIZE)
+    ct_tag = ascon_encrypt(PSK_ASCON, nonce, b"", plaintext, variant="Ascon-128")
+    return nonce + ct_tag
+
+def decrypt_message(encrypted_message):
+    """Decrypts using ASCON-128, splitting 16-byte nonce and verifying tag."""
     try:
-        ex_sock.connect((GCS_HOST, PORT_KEY_EXCHANGE))
-        break
-    except ConnectionRefusedError:
-        print("[ASCON Drone] GCS not ready, retry in 2s...")
-        time.sleep(2)
-
-print(f"[ASCON Drone] Connected to {GCS_HOST}:{PORT_KEY_EXCHANGE}")
-# For symmetric algorithms, we use pre-shared or simple key exchange
-ASCON_KEY = ex_sock.recv(16)  # 128-bit key for ASCON-128
-ex_sock.close()
-
-if USING_ASCON:
-    print("✅ [ASCON Drone] Using ASCON-128 AEAD")
-else:
-    # Fallback to AES-GCM if ASCON not available
-    print("✅ [ASCON Drone] Using AES-GCM fallback")
-    # Extend 16-byte key to 32-byte for AES-256-GCM
-    import hashlib
-    extended_key = hashlib.sha256(ASCON_KEY).digest()
-    aesgcm = AESGCM(extended_key)
-
-
-def encrypt_message(plaintext: bytes) -> bytes:
-    if USING_ASCON:
-        nonce = os.urandom(16)  # 128-bit nonce for ASCON
-        ciphertext = ascon.encrypt(ASCON_KEY, nonce, b"", plaintext)
-        return nonce + ciphertext
-    else:
-        nonce = os.urandom(NONCE_IV_SIZE)
-        ct = aesgcm.encrypt(nonce, plaintext, None)
-        return nonce + ct
-
-
-def decrypt_message(encrypted_message: bytes):
-    try:
-        if USING_ASCON:
-            nonce = encrypted_message[:16]
-            ciphertext = encrypted_message[16:]
-            return ascon.decrypt(ASCON_KEY, nonce, b"", ciphertext)
-        else:
-            nonce = encrypted_message[:NONCE_IV_SIZE]
-            ct = encrypted_message[NONCE_IV_SIZE:]
-            return aesgcm.decrypt(nonce, ct, None)
-    except Exception as e:
-        print(f"[ASCON Drone] Decryption failed: {e}")
+        if len(encrypted_message) < ASCON_NONCE_SIZE:
+            return None
+        nonce = encrypted_message[:ASCON_NONCE_SIZE]
+        ct_tag = encrypted_message[ASCON_NONCE_SIZE:]
+        plaintext = ascon_decrypt(PSK_ASCON, nonce, b"", ct_tag, variant="Ascon-128")
+        retur(f"[ASCON Drone] Decryption failed: {e}")
         return None
 
+## 3. NETWORKING THREADS ##
 
 def telemetry_to_gcs_thread():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
-    print(f"[ASCON Drone] Listening plaintext TLM on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM}")
-    while True:
-        data, _ = sock.recvfrom(65535)
-        enc = encrypt_message(data)
-        sock.sendto(enc, (GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    """Thread 1: Encrypt outgoing telemetry from flight controller to GCS"""
+    # Listen for plaintext telemetry from flight controller
+    listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    except OSError as e:
+        print(f"[ASCON Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    
+    # Socket to send encrypted telemetry to GCS
+    send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    print(f"[ASCON Drone] Listening for plaintext telemetry on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM}")
+    print(f"[ASCON Drone] Forwarding encrypted TLM to {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM}")
 
+    while True:
+        try:
+            plaintext_data, addr = listen_sock.recvfrom(4096)
+            encrypted_telemetry = encrypt_message(plaintext_data)
+            send_sock.sendto(encrypted_telemetry, (GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+        except Exception as e:
+            print(f"[ASCON Drone] Telemetry thread error: {e}")
+            time.sleep(0.1)
 
 def commands_from_gcs_thread():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
-    print(f"[ASCON Drone] Listening encrypted CMD on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD}")
-    while True:
-        data, _ = sock.recvfrom(65535)
-        pt = decrypt_message(data)
-        if pt:
-            sock.sendto(pt, (DRONE_HOST, PORT_DRONE_FORWARD_DECRYPTED_CMD))
+    """Thread 2: Decrypt incoming commands from GCS to flight controller"""
+    # Listen for encrypted commands from GCS
+    listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    except OSError as e:
+        print(f"[ASCON Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    
+    # Socket to forward decrypted commands to flight controller
+    forward_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    print(f"[ASCON Drone] Listening for encrypted GCS commands on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD}")
+    print(f"[ASCON Drone] Forwarding decrypted CMD to {DRONE_HOST}:{PORT_DRONE_FORWARD_DECRYPTED_CMD}")
 
+    while True:
+        try:
+            encrypted_data, addr = listen_sock.recvfrom(4096)
+            plaintext_command = decrypt_message(encrypted_data)
+            if plaintext_command:
+                forward_sock.sendto(plaintext_command, (DRONE_HOST, PORT_DRONE_FORWARD_DECRYPTED_CMD))
+        except Exception as e:
+            print(f"[ASCON Drone] Command thread error: {e}")
+            time.sleep(0.1)
+
+## 4. MAIN LOGIC ##
 
 if __name__ == "__main__":
-    print("--- DRONE ASCON-128 AEAD PROXY ---")
-    t1 = threading.Thread(target=telemetry_to_gcs_thread, daemon=True)
-    t2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
+    print("--- DRONE ASCON PROXY ---")
+    
+    thread1 = threading.Thread(target=telemetry_to_gcs_thread, daemon=True)
+    thread2 = threading.Thread(target=commands_from_gcs_thread, daemon=True)
+    
+    thread1.start()
+    thread2.start()
+    
+    thread1.join()
+    thread2.join()

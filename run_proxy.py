@@ -23,23 +23,30 @@ if ROOT not in sys.path:
 
 from async_proxy import run_proxy_async
 
-# Try to import ip_config from both sides; prefer per-role when selecting
+# Prefer centralized project-level IP config if present
 try:
-    from gcs.ip_config import GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM, PORT_GCS_LISTEN_PLAINTEXT_CMD, PORT_GCS_FORWARD_DECRYPTED_TLM
+    from project_ip_config import (
+        GCS_HOST, DRONE_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM, PORT_GCS_LISTEN_PLAINTEXT_CMD,
+        PORT_GCS_FORWARD_DECRYPTED_TLM, PORT_DRONE_LISTEN_ENCRYPTED_CMD, PORT_DRONE_LISTEN_PLAINTEXT_TLM,
+        PORT_DRONE_FORWARD_DECRYPTED_CMD, PORT_KEY_EXCHANGE
+    )
 except Exception:
-    # fallbacks
-    GCS_HOST = '127.0.0.1'
-    PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821
-    PORT_GCS_LISTEN_PLAINTEXT_CMD = 5822
-    PORT_GCS_FORWARD_DECRYPTED_TLM = 5823
+    # fall back to per-role ip_config files
+    try:
+        from gcs.ip_config import GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM, PORT_GCS_LISTEN_PLAINTEXT_CMD, PORT_GCS_FORWARD_DECRYPTED_TLM
+    except Exception:
+        GCS_HOST = '127.0.0.1'
+        PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821
+        PORT_GCS_LISTEN_PLAINTEXT_CMD = 5822
+        PORT_GCS_FORWARD_DECRYPTED_TLM = 5823
 
-try:
-    from drone.ip_config import DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD, PORT_DRONE_LISTEN_PLAINTEXT_TLM, PORT_DRONE_FORWARD_DECRYPTED_CMD
-except Exception:
-    DRONE_HOST = '127.0.0.1'
-    PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811
-    PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5813
-    PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812
+    try:
+        from drone.ip_config import DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD, PORT_DRONE_LISTEN_PLAINTEXT_TLM, PORT_DRONE_FORWARD_DECRYPTED_CMD
+    except Exception:
+        DRONE_HOST = '127.0.0.1'
+        PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811
+        PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5813
+        PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812
 
 
 def parse_args():
@@ -56,7 +63,7 @@ def parse_args():
     return p.parse_args()
 
 
-async def _run_proxy(role, algo, public_host, public_port, local_in, local_out, gcs_host, benchmark_duration=0):
+async def _run_proxy(role, algo, public_host, public_port, local_in, local_out, remote_host, benchmark_duration=0):
     # In benchmark mode, launch perf against self (Linux-only)
     perf_proc = None
     perf_log = None
@@ -72,7 +79,7 @@ async def _run_proxy(role, algo, public_host, public_port, local_in, local_out, 
             perf_proc = None
 
     # Run the proxy until cancelled or duration expires
-    task = asyncio.create_task(run_proxy_async(role, algo, public_host, public_port, '127.0.0.1', local_in, local_out, gcs_host))
+    task = asyncio.create_task(run_proxy_async(role, algo, public_host, public_port, '127.0.0.1', local_in, local_out, remote_host))
     if benchmark_duration > 0:
         try:
             await asyncio.wait_for(task, timeout=benchmark_duration)
@@ -263,6 +270,10 @@ def main():
             args.role = 'drone'
             print('[auto-detect] defaulting to role=drone')
 
+    # Ensure gcs_host defaults to configured GCS_HOST if not provided
+    if not args.gcs_host or args.gcs_host == '127.0.0.1':
+        args.gcs_host = GCS_HOST
+
     if args.role == 'gcs':
         public_host = args.public_host or GCS_HOST
         public_port = PORT_GCS_LISTEN_ENCRYPTED_TLM
@@ -279,9 +290,9 @@ def main():
         local_out = args.local_out_port or PORT_DRONE_FORWARD_DECRYPTED_CMD
 
     if args.mode == 'proxy':
-        asyncio.run(_run_proxy(args.role, args.algo, public_host, public_port, local_in, local_out, args.gcs_host, 0))
+        asyncio.run(_run_proxy(args.role, args.algo, public_host, public_port, local_in, local_out, remote_host, 0))
     elif args.mode == 'benchmark':
-        asyncio.run(_run_proxy(args.role, args.algo, public_host, public_port, local_in, local_out, args.gcs_host, args.duration))
+        asyncio.run(_run_proxy(args.role, args.algo, public_host, public_port, local_in, local_out, remote_host, args.duration))
     else:
         print('rl-inference mode is not implemented yet')
 

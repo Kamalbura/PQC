@@ -69,7 +69,11 @@ def setup_key_exchange():
     print(f"[{ALGORITHM_NAME} GCS] Setting up key exchange server...")
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    try:
+        server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] bind failed on {GCS_HOST}:{PORT_KEY_EXCHANGE} -> {e}; falling back to 0.0.0.0")
+        server_sock.bind(("0.0.0.0", PORT_KEY_EXCHANGE))
     server_sock.listen(1)
     print(f"[{ALGORITHM_NAME} GCS] Waiting for drone connection on {GCS_HOST}:{PORT_KEY_EXCHANGE}")
 
@@ -81,7 +85,6 @@ def setup_key_exchange():
                 import oqs.oqs as oqs
                 kem = oqs.KeyEncapsulation("ML-KEM-768")
                 kyber_public = kem.generate_keypair()
-                kyber_secret = kem.export_secret_key()
                 # Send Kyber public key with explicit length
                 _send_with_len(conn, kyber_public)
                 # Receive ciphertext (length-prefixed)
@@ -141,7 +144,11 @@ def decrypt_message(em: bytes) -> bytes:
 def commands_to_drone_thread():
     ls = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ls.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    try:
+        ls.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD} -> {e}; using 0.0.0.0")
+        ls.bind(("0.0.0.0", PORT_GCS_LISTEN_PLAINTEXT_CMD))
     ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print(f"[{ALGORITHM_NAME} GCS] Listening commands {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD} -> {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD}")
     while True:
@@ -160,7 +167,11 @@ def commands_to_drone_thread():
 def telemetry_from_drone_thread():
     ls = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ls.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    try:
+        ls.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM} -> {e}; using 0.0.0.0")
+        ls.bind(("0.0.0.0", PORT_GCS_LISTEN_ENCRYPTED_TLM))
     ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print(f"[{ALGORITHM_NAME} GCS] Listening telemetry {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM} -> {GCS_HOST}:{PORT_GCS_FORWARD_DECRYPTED_TLM}")
     while True:

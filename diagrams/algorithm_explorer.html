@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Quantum Cryptography Algorithm Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+
+        .algorithm-selector {
+            background: #f8f9fa;
+            padding: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .selector-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .algorithm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .algorithm-category {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .pre-quantum .category-title {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+        }
+
+        .post-quantum .category-title {
+            background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+        }
+
+        .algorithm-buttons {
+            display: grid;
+            gap: 10px;
+        }
+
+        .algo-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .algo-btn:active {
+            transform: translateY(0);
+        }
+
+        .algo-btn.active {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.3);
+        }
+
+        .algo-info {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .diagram-container {
+            padding: 30px;
+            background: white;
+            min-height: 600px;
+        }
+
+        .diagram-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 2em;
+            font-weight: 300;
+        }
+
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .algorithm-details {
+            background: #f8f9fa;
+            padding: 25px;
+            border-top: 1px solid #e9ecef;
+            display: none;
+        }
+
+        .algorithm-details.active {
+            display: block;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .detail-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .detail-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .detail-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+            color: #555;
+        }
+
+        .detail-card li:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+            font-size: 1.2em;
+        }
+
+        .implementation-info {
+            background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .implementation-info h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .file-path {
+            font-family: 'Courier New', monospace;
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Algorithm Flow Explorer</h1>
+            <p>Interactive Post-Quantum Cryptography Implementation Analysis</p>
+        </div>
+
+        <div class="algorithm-selector">
+            <div class="selector-title">Select Algorithm to Explore Implementation Flow</div>
+            
+            <div class="algorithm-grid">
+                <div class="algorithm-category pre-quantum">
+                    <div class="category-title">Pre-Quantum Algorithms</div>
+                    <div class="algorithm-buttons">
+                        <button class="algo-btn" data-algo="ascon">
+                            <strong>c1: ASCON-128</strong>
+                            <div class="algo-info">NIST Lightweight Crypto Winner - AEAD</div>
+                        </button>
+                        <button class="algo-btn" data-algo="speck">
+                            <strong>c2: SPECK-128/128</strong>
+                            <div class="algo-info">NSA Lightweight Block Cipher</div>
+                        </button>
+                        <button class="algo-btn" data-algo="camellia">
+                            <strong>c3: Camellia-128</strong>
+                            <div class="algo-info">ISO Standard Block Cipher</div>
+                        </button>
+                        <button class="algo-btn" data-algo="hight">
+                            <strong>c4: HIGHT</strong>
+                            <div class="algo-info">Korean Lightweight Standard</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="algorithm-category post-quantum">
+                    <div class="category-title">Post-Quantum Algorithms</div>
+                    <div class="algorithm-buttons">
+                        <button class="algo-btn" data-algo="dilithium">
+                            <strong>c5: Dilithium</strong>
+                            <div class="algo-info">NIST PQC Digital Signatures (ML-DSA)</div>
+                        </button>
+                        <button class="algo-btn" data-algo="kyber">
+                            <strong>c6: Kyber</strong>
+                            <div class="algo-info">NIST PQC Key Encapsulation (ML-KEM)</div>
+                        </button>
+                        <button class="algo-btn" data-algo="sphincs">
+                            <strong>c7: SPHINCS+</strong>
+                            <div class="algo-info">Hash-based Stateless Signatures</div>
+                        </button>
+                        <button class="algo-btn" data-algo="falcon">
+                            <strong>c8: Falcon</strong>
+                            <div class="algo-info">Lattice-based Compact Signatures</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div id="welcome-message">
+                <div class="diagram-title">Welcome to Algorithm Explorer</div>
+                <div style="text-align: center; padding: 50px; color: #7f8c8d; font-size: 1.2em;">
+                    <p>Select an algorithm above to explore its implementation flow</p>
+                    <p style="margin-top: 20px;">Each diagram shows the complete data flow between drone and GCS implementations</p>
+                </div>
+            </div>
+            
+            <div id="diagram-content" style="display: none;">
+                <div class="diagram-title" id="current-algorithm"></div>
+                <div class="mermaid" id="mermaid-diagram"></div>
+            </div>
+            
+            <div id="loading" class="loading" style="display: none;">
+                Loading algorithm diagram...
+            </div>
+            
+            <div id="error" class="error" style="display: none;">
+                Error loading diagram. Please try again.
+            </div>
+        </div>
+
+        <div class="algorithm-details" id="algorithm-details">
+            <div class="implementation-info">
+                <h4>📁 Implementation Files</h4>
+                <div class="file-path" id="drone-file">drone/drone_[algorithm].py</div>
+                <div class="file-path" id="gcs-file">gcs/gcs_[algorithm].py</div>
+            </div>
+            
+            <div class="details-grid" id="details-content">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Algorithm data
+        const algorithms = {
+            ascon: {
+                title: "ASCON-128 AEAD Flow",
+                file: "ascon_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 Algorithm Specifications",
+                        items: [
+                            "Type: Authenticated Encryption with Associated Data (AEAD)",
+                            "Key Size: 128 bits (16 bytes)",
+                            "Nonce Size: 128 bits (16 bytes)",
+                            "Security Level: 128-bit",
+                            "Standard: NIST SP 800-232 (Lightweight Crypto Winner)",
+                            "Variant: Ascon-128 (c1 in research paper)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: drneha.ascon.ascon",
+                            "Functions: ascon_encrypt(), ascon_decrypt()",
+                            "Pre-shared Key: 'ThisIsA16ByteKey' (research only)",
+                            "Frame Format: [16-byte nonce][ciphertext][16-byte tag]",
+                            "Error Handling: Returns None on decrypt failure"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Authenticated Encryption: Confidentiality + Integrity",
+                            "Nonce-based: Prevents replay attacks",
+                            "Lightweight: Optimized for constrained devices",
+                            "Standardized: NIST approved algorithm",
+                            "Research Context: PSK acceptable for testing"
+                        ]
+                    }
+                }
+            },
+            speck: {
+                title: "SPECK-128/128 Block Cipher Flow",
+                file: "speck_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 Algorithm Specifications",
+                        items: [
+                            "Type: Lightweight Block Cipher",
+                            "Key Size: 128 bits (16 bytes)",
+                            "Block Size: 128 bits (16 bytes)",
+                            "Mode: CBC (Cipher Block Chaining)",
+                            "IV Size: 128 bits (16 bytes)",
+                            "Designer: NSA (2013)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: drneha.new_git_repos.Speck.speck",
+                            "Class: Python_SPECK",
+                            "Pre-shared Key: 'MySecureSpeckKey'",
+                            "Padding: PKCS7 (pycryptodome)",
+                            "Frame Format: [16-byte IV][padded_ciphertext]"
+                        ]
+                    },
+                    security: {
+                        title: "⚠️ Security Considerations",
+                        items: [
+                            "CBC Mode: Requires MAC for authenticity",
+                            "IV Randomness: Critical for security",
+                            "Padding Oracle: Potential vulnerability",
+                            "Key Reuse: Same PSK across sessions",
+                            "Research Context: Acceptable for testing"
+                        ]
+                    }
+                }
+            },
+            kyber: {
+                title: "Kyber-768 Post-Quantum Key Encapsulation Flow",
+                file: "kyber_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 ML-KEM-768 Specifications",
+                        items: [
+                            "Type: Key Encapsulation Mechanism (KEM)",
+                            "Security Level: NIST Level 3 (192-bit equivalent)",
+                            "Public Key: 1184 bytes",
+                            "Ciphertext: 1088 bytes",
+                            "Shared Secret: 32 bytes",
+                            "Standard: NIST FIPS 203 (ML-KEM)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: oqs.oqs (liboqs-python)",
+                            "Key Exchange: TCP handshake on port 5800",
+                            "Transport: AES-256-GCM with derived key",
+                            "Thread Sync: crypto_ready.Event()",
+                            "Frame Format: [12-byte nonce][AES-GCM ciphertext]"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Post-Quantum Security: Resistant to quantum attacks",
+                            "Forward Secrecy: New session key per connection",
+                            "Authentication: AES-GCM provides authenticity",
+                            "Key Derivation: SHA-256 for uniform distribution",
+                            "Replay Protection: Nonce-based encryption"
+                        ]
+                    }
+                }
+            },
+            camellia: {
+                title: "Camellia-128 Block Cipher Flow",
+                file: "camellia_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 Algorithm Specifications",
+                        items: [
+                            "Type: Symmetric Block Cipher",
+                            "Key Size: 128 bits (16 bytes)",
+                            "Block Size: 128 bits (16 bytes)",
+                            "Mode: CBC (Cipher Block Chaining)",
+                            "Standard: ISO/IEC 18033-3, RFC 3713",
+                            "Variant: Camellia-128 (c3 in research paper)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: drneha.camellia (custom implementation)",
+                            "Pre-shared Key: Research-specific PSK",
+                            "Padding: PKCS7 (pycryptodome)",
+                            "Frame Format: [16-byte IV][padded_ciphertext]",
+                            "Thread Safety: Separate cipher instances"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "International Standard: ISO/IEC approved",
+                            "Strong Security: 128-bit key strength",
+                            "CBC Mode: Requires proper IV handling",
+                            "Padding: PKCS7 standard padding",
+                            "Research Context: PSK acceptable for testing"
+                        ]
+                    }
+                }
+            },
+            hight: {
+                title: "HIGHT Lightweight Block Cipher Flow",
+                file: "hight_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 Algorithm Specifications",
+                        items: [
+                            "Type: Lightweight Block Cipher",
+                            "Key Size: 128 bits (16 bytes)",
+                            "Block Size: 64 bits (8 bytes)",
+                            "Standard: Korean Standard (KS X 1213-1)",
+                            "Designer: KISA (Korea Internet & Security Agency)",
+                            "Variant: HIGHT (c4 in research paper)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: drneha.hight (custom implementation)",
+                            "Pre-shared Key: Research-specific PSK",
+                            "Lightweight Design: Optimized for IoT",
+                            "Simple Operations: ARX (Add-Rotate-XOR)",
+                            "Low Resource Usage: Minimal memory footprint"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Lightweight Security: Designed for constrained devices",
+                            "64-bit Block: Suitable for small messages",
+                            "Korean Standard: Nationally approved",
+                            "IoT Optimized: Low power consumption",
+                            "Research Context: Comparative analysis"
+                        ]
+                    }
+                }
+            },
+            dilithium: {
+                title: "Dilithium2 Post-Quantum Digital Signature Flow",
+                file: "dilithium_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 ML-DSA-44 Specifications",
+                        items: [
+                            "Type: Post-Quantum Digital Signature",
+                            "Security Level: NIST Level 2 (128-bit equivalent)",
+                            "Public Key Size: 1312 bytes",
+                            "Signature Size: 2420 bytes",
+                            "Private Key Size: 2528 bytes",
+                            "Standard: NIST FIPS 204 (ML-DSA)"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: oqs.oqs (liboqs-python)",
+                            "Session Key: Kyber-768 KEM + AES-256-GCM",
+                            "Frame Format: [MARKER][sig_len][signature][MARKER][message]",
+                            "Markers: DILITHIUM2_SIG, DILITHIUM2_MSG",
+                            "Error Handling: Invalid signatures rejected"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Post-Quantum Security: Lattice-based signatures",
+                            "Non-repudiation: Cryptographic proof of origin",
+                            "Message Integrity: Tamper detection",
+                            "Authentication: Verify sender identity",
+                            "Forward Security: Past signatures remain secure"
+                        ]
+                    }
+                }
+            },
+            sphincs: {
+                title: "SPHINCS+-SHA2-128f Hash-based Signature Flow",
+                file: "sphincs_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 SPHINCS+-SHA2-128f Specifications",
+                        items: [
+                            "Type: Hash-based Digital Signature",
+                            "Security Level: NIST Level 1 (128-bit equivalent)",
+                            "Public Key Size: 32 bytes",
+                            "Signature Size: 17088 bytes",
+                            "Private Key Size: 64 bytes",
+                            "Standard: NIST Round 3 Alternate"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: oqs.oqs (liboqs-python)",
+                            "Hash Function: SHA-256",
+                            "Session Key: Kyber-768 KEM + AES-256-GCM",
+                            "Frame Format: [MARKER][sig_len][signature][MARKER][message]",
+                            "Stateless: No key state management required"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Post-Quantum Security: Hash-based construction",
+                            "Stateless: No key state to manage",
+                            "Conservative Security: Based on hash functions",
+                            "Large Signatures: Trade-off for security",
+                            "Quantum-Safe: Resistant to all known attacks"
+                        ]
+                    }
+                }
+            },
+            falcon: {
+                title: "Falcon-512 Post-Quantum Digital Signature Flow",
+                file: "falcon_flow.mmd",
+                details: {
+                    specs: {
+                        title: "🔐 Falcon-512 Specifications",
+                        items: [
+                            "Type: Post-Quantum Digital Signature",
+                            "Security Level: NIST Level 1 (128-bit equivalent)",
+                            "Public Key Size: 897 bytes",
+                            "Signature Size: ~690 bytes (variable)",
+                            "Private Key Size: 1281 bytes",
+                            "Standard: NIST Round 3 Finalist"
+                        ]
+                    },
+                    implementation: {
+                        title: "⚙️ Implementation Details",
+                        items: [
+                            "Library: oqs.oqs (liboqs-python)",
+                            "Session Key: Kyber-768 KEM + AES-256-GCM",
+                            "Frame Format: [MARKER][sig_len][signature][MARKER][message]",
+                            "Compact Signatures: Smaller than Dilithium",
+                            "Fast Verification: Optimized for speed"
+                        ]
+                    },
+                    security: {
+                        title: "🛡️ Security Properties",
+                        items: [
+                            "Post-Quantum Security: NTRU lattice-based",
+                            "Compact Signatures: Smallest PQC signatures",
+                            "Fast Operations: Efficient sign/verify",
+                            "Non-repudiation: Cryptographic proof",
+                            "Message Integrity: Tamper detection"
+                        ]
+                    }
+                }
+            }
+        };
+
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // Event handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const algoButtons = document.querySelectorAll('.algo-btn');
+            
+            algoButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const algo = this.dataset.algo;
+                    loadAlgorithm(algo);
+                    
+                    // Update active button
+                    algoButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+
+        async function loadAlgorithm(algo) {
+            const welcomeMessage = document.getElementById('welcome-message');
+            const diagramContent = document.getElementById('diagram-content');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const algorithmDetails = document.getElementById('algorithm-details');
+
+            // Hide all sections
+            welcomeMessage.style.display = 'none';
+            diagramContent.style.display = 'none';
+            error.style.display = 'none';
+            algorithmDetails.classList.remove('active');
+
+            // Show loading
+            loading.style.display = 'block';
+
+            try {
+                const algorithmData = algorithms[algo];
+                if (!algorithmData) {
+                    throw new Error('Algorithm not found');
+                }
+
+                // Load diagram
+                const response = await fetch(algorithmData.file);
+                if (!response.ok) {
+                    throw new Error('Failed to load diagram');
+                }
+                
+                const diagramText = await response.text();
+                
+                // Update title and content
+                document.getElementById('current-algorithm').textContent = algorithmData.title;
+                
+                // Clear previous diagram and create new container
+                const diagramContainer = document.getElementById('mermaid-diagram');
+                diagramContainer.innerHTML = '';
+                
+                // Create a new div for the mermaid diagram
+                const mermaidDiv = document.createElement('div');
+                mermaidDiv.className = 'mermaid';
+                mermaidDiv.textContent = diagramText;
+                diagramContainer.appendChild(mermaidDiv);
+                
+                // Update file paths
+                document.getElementById('drone-file').textContent = `drone/drone_${algo}.py`;
+                document.getElementById('gcs-file').textContent = `gcs/gcs_${algo}.py`;
+                
+                // Update details
+                updateDetails(algorithmData.details);
+                
+                // Render mermaid diagram
+                await mermaid.run();
+                
+                // Hide loading and show content
+                loading.style.display = 'none';
+                diagramContent.style.display = 'block';
+                algorithmDetails.classList.add('active');
+                
+            } catch (err) {
+                console.error('Error loading algorithm:', err);
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `Error loading ${algo} diagram: ${err.message}`;
+            }
+        }
+
+        function updateDetails(details) {
+            const detailsContent = document.getElementById('details-content');
+            detailsContent.innerHTML = '';
+            
+            Object.keys(details).forEach(key => {
+                const detail = details[key];
+                const card = document.createElement('div');
+                card.className = 'detail-card';
+                
+                const title = document.createElement('h3');
+                title.textContent = detail.title;
+                card.appendChild(title);
+                
+                const list = document.createElement('ul');
+                detail.items.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = item;
+                    list.appendChild(listItem);
+                });
+                card.appendChild(list);
+                
+                detailsContent.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

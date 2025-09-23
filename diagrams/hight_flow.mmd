@@ -1,0 +1,69 @@
+graph TB
+    %% HIGHT Lightweight Block Cipher Flow Diagram
+    %% Research Paper Quality - Pre-Quantum Algorithm c4
+    
+    classDef droneNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef gcsNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef cryptoOp fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef dataFlow fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef portNode fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE - HIGHT Implementation"]
+        FC[Flight Controller<br/>MAVLink Source]:::droneNode
+        
+        subgraph DRONE_CRYPTO ["drone_hight.py Process"]
+            D_LISTEN[Listen Thread<br/>Port 5820<br/>Plaintext Telemetry]:::droneNode
+            D_HIGHT_ENC[HIGHT Encrypt<br/>Key: 128-bit<br/>Block: 64-bit<br/>Korean Standard]:::cryptoOp
+            D_SEND[Send Thread<br/>Port 5821<br/>Encrypted Telemetry]:::droneNode
+            
+            D_RECV[Receive Thread<br/>Port 5811<br/>Encrypted Commands]:::droneNode
+            D_HIGHT_DEC[HIGHT Decrypt<br/>Key: 128-bit<br/>Block: 64-bit<br/>Lightweight Design]:::cryptoOp
+            D_FORWARD[Forward Thread<br/>Port 5812<br/>Decrypted Commands]:::droneNode
+        end
+    end
+
+    subgraph NETWORK ["🌐 Network Layer"]
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::portNode
+        P5821[Port 5821<br/>GCS Encrypted TLM]:::portNode
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::portNode
+        P5811[Port 5811<br/>Drone Encrypted CMD]:::portNode
+        P5812[Port 5812<br/>Drone Decrypted CMD]:::portNode
+        P5822[Port 5822<br/>GCS Decrypted TLM]:::portNode
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE - HIGHT Implementation"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]:::gcsNode
+        
+        subgraph GCS_CRYPTO ["gcs_hight.py Process"]
+            G_LISTEN_TLM[Listen Thread<br/>Port 5821<br/>Encrypted Telemetry]:::gcsNode
+            G_HIGHT_DEC[HIGHT Decrypt<br/>Key: 128-bit<br/>Block: 64-bit<br/>Lightweight Design]:::cryptoOp
+            G_FORWARD_TLM[Forward Thread<br/>Port 5822<br/>Decrypted Telemetry]:::gcsNode
+            
+            G_LISTEN_CMD[Listen Thread<br/>Port 5810<br/>Plaintext Commands]:::gcsNode
+            G_HIGHT_ENC[HIGHT Encrypt<br/>Key: 128-bit<br/>Block: 64-bit<br/>Korean Standard]:::cryptoOp
+            G_SEND[Send Thread<br/>Port 5811<br/>Encrypted Commands]:::gcsNode
+        end
+    end
+
+    %% Data Flow
+    FC -->|MAVLink| P5820
+    P5820 --> D_LISTEN
+    D_LISTEN --> D_HIGHT_ENC
+    D_HIGHT_ENC --> D_SEND
+    D_SEND --> P5821
+    P5821 --> G_LISTEN_TLM
+    G_LISTEN_TLM --> G_HIGHT_DEC
+    G_HIGHT_DEC --> G_FORWARD_TLM
+    G_FORWARD_TLM --> P5822
+    P5822 --> GCS_APP
+
+    GCS_APP --> P5810
+    P5810 --> G_LISTEN_CMD
+    G_LISTEN_CMD --> G_HIGHT_ENC
+    G_HIGHT_ENC --> G_SEND
+    G_SEND --> P5811
+    P5811 --> D_RECV
+    D_RECV --> D_HIGHT_DEC
+    D_HIGHT_DEC --> D_FORWARD
+    D_FORWARD --> P5812
+    P5812 --> FC

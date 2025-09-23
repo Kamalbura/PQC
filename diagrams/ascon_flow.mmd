@@ -1,0 +1,77 @@
+graph TB
+    %% ASCON-128 AEAD Algorithm Flow Diagram
+    %% Research Paper Quality - Pre-Quantum Algorithm c1
+    
+    classDef droneNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef gcsNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef cryptoOp fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef dataFlow fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef portNode fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE - ASCON-128 Implementation"]
+        FC[Flight Controller<br/>MAVLink Source]:::droneNode
+        
+        subgraph DRONE_CRYPTO ["drone_ascon.py Process"]
+            D_LISTEN[Listen Thread<br/>Port 5820<br/>Plaintext Telemetry]:::droneNode
+            D_ENCRYPT[ASCON-128 Encrypt<br/>Key: 16-byte PSK<br/>Nonce: 16 random bytes<br/>Output: nonce + ciphertext + tag]:::cryptoOp
+            D_SEND[Send Thread<br/>Port 5821<br/>Encrypted Telemetry]:::droneNode
+            
+            D_RECV[Receive Thread<br/>Port 5811<br/>Encrypted Commands]:::droneNode
+            D_DECRYPT[ASCON-128 Decrypt<br/>Extract: nonce, ciphertext, tag<br/>Verify & Decrypt<br/>Output: plaintext or None]:::cryptoOp
+            D_FORWARD[Forward Thread<br/>Port 5812<br/>Decrypted Commands]:::droneNode
+        end
+    end
+
+    subgraph NETWORK ["🌐 Network Layer"]
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::portNode
+        P5821[Port 5821<br/>GCS Encrypted TLM]:::portNode
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::portNode
+        P5811[Port 5811<br/>Drone Encrypted CMD]:::portNode
+        P5812[Port 5812<br/>Drone Decrypted CMD]:::portNode
+        P5822[Port 5822<br/>GCS Decrypted TLM]:::portNode
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE - ASCON-128 Implementation"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]:::gcsNode
+        
+        subgraph GCS_CRYPTO ["gcs_ascon.py Process"]
+            G_LISTEN_TLM[Listen Thread<br/>Port 5821<br/>Encrypted Telemetry]:::gcsNode
+            G_DECRYPT[ASCON-128 Decrypt<br/>Extract: nonce, ciphertext, tag<br/>Verify & Decrypt<br/>Output: plaintext or None]:::cryptoOp
+            G_FORWARD_TLM[Forward Thread<br/>Port 5822<br/>Decrypted Telemetry]:::gcsNode
+            
+            G_LISTEN_CMD[Listen Thread<br/>Port 5810<br/>Plaintext Commands]:::gcsNode
+            G_ENCRYPT[ASCON-128 Encrypt<br/>Key: 16-byte PSK<br/>Nonce: 16 random bytes<br/>Output: nonce || ciphertext || tag]:::cryptoOp
+            G_SEND[Send Thread<br/>Port 5811<br/>Encrypted Commands]:::gcsNode
+        end
+    end
+
+    %% Data Flow - Telemetry Path (Drone → GCS)
+    FC -->|MAVLink Telemetry| P5820
+    P5820 --> D_LISTEN
+    D_LISTEN --> D_ENCRYPT
+    D_ENCRYPT --> D_SEND
+    D_SEND -->|UDP Encrypted| P5821
+    P5821 --> G_LISTEN_TLM
+    G_LISTEN_TLM --> G_DECRYPT
+    G_DECRYPT --> G_FORWARD_TLM
+    G_FORWARD_TLM -->|MAVLink Telemetry| P5822
+    P5822 --> GCS_APP
+
+    %% Data Flow - Command Path (GCS → Drone)
+    GCS_APP -->|MAVLink Commands| P5810
+    P5810 --> G_LISTEN_CMD
+    G_LISTEN_CMD --> G_ENCRYPT
+    G_ENCRYPT --> G_SEND
+    G_SEND -->|UDP Encrypted| P5811
+    P5811 --> D_RECV
+    D_RECV --> D_DECRYPT
+    D_DECRYPT --> D_FORWARD
+    D_FORWARD -->|MAVLink Commands| P5812
+    P5812 --> FC
+
+    %% Algorithm Details
+    subgraph ALGO_DETAILS ["📋 ASCON-128 Algorithm Details"]
+        SPECS["🔐 ASCON-128 Specifications<br/>• Type: Authenticated Encryption with Associated Data (AEAD)<br/>• Key Size: 128 bits (16 bytes)<br/>• Nonce Size: 128 bits (16 bytes)<br/>• Security Level: 128-bit<br/>• Standard: NIST SP 800-232 (Lightweight Crypto Winner)<br/>• Variant: Ascon-128 (c1 in research paper)"]:::dataFlow
+        
+        IMPL["⚙️ Implementation Details<br/>• Library: drneha.ascon.ascon<br/>• Functions: ascon_encrypt(), ascon_decrypt()<br/>• Pre-shared Key: 'ThisIsA16ByteKey' (research only)<br/>• Frame Format: [16-byte nonce][ciphertext][16-byte tag]<br/>• Error Handling: Returns None on decrypt failure"]:::dataFlow
+    end

@@ -1,0 +1,174 @@
+graph TB
+    %% Styling
+    classDef droneBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef gcsBox fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef preQuantum fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef postQuantum fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef network fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef port fill:#fff9c4,stroke:#f57f17,stroke-width:1px
+
+    %% Main Architecture
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE (192.168.0.102)"]
+        FC[Flight Controller<br/>MAVLink Source]
+        
+        subgraph DRONE_ALGOS ["Drone Cryptographic Proxies"]
+            %% Pre-Quantum Algorithms
+            D_ASCON[drone_ascon.py<br/>ASCON-128 AEAD<br/>c1]:::preQuantum
+            D_SPECK[drone_speck.py<br/>SPECK-128/128<br/>c2]:::preQuantum
+            D_CAMELLIA[drone_camellia.py<br/>Camellia-128<br/>c3]:::preQuantum
+            D_HIGHT[drone_hight.py<br/>HIGHT<br/>c4]:::preQuantum
+            
+            %% Post-Quantum Algorithms
+            D_DILITHIUM[drone_dilithium2/3/5.py<br/>ML-DSA Signatures<br/>c5]:::postQuantum
+            D_KYBER[drone_kyber_512/768/1024.py<br/>ML-KEM Key Exchange<br/>c6]:::postQuantum
+            D_SPHINCS[drone_sphincs_*.py<br/>Hash-based Signatures<br/>c7]:::postQuantum
+            D_FALCON[drone_falcon_512/1024.py<br/>Lattice Signatures<br/>c8]:::postQuantum
+        end
+        
+        %% Simplified Implementations
+        subgraph SDRONE ["Simplified Drone (sdrone/)"]
+            SD_PROXY[singleport_common.py<br/>Unified Implementation]:::network
+        end
+    end
+
+    subgraph NETWORK ["🌐 NETWORK LAYER"]
+        %% Port Definitions
+        P5800[Port 5800<br/>TCP Key Exchange]:::port
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::port
+        P5811[Port 5811<br/>Drone Encrypted CMD]:::port
+        P5812[Port 5812<br/>Drone Decrypted CMD]:::port
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::port
+        P5821[Port 5821<br/>GCS Encrypted TLM]:::port
+        P5822[Port 5822<br/>GCS Decrypted TLM]:::port
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE (192.168.0.104)"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]
+        
+        subgraph GCS_ALGOS ["GCS Cryptographic Proxies"]
+            %% Pre-Quantum Algorithms
+            G_ASCON[gcs_ascon.py<br/>ASCON-128 AEAD<br/>c1]:::preQuantum
+            G_SPECK[gcs_speck.py<br/>SPECK-128/128<br/>c2]:::preQuantum
+            G_CAMELLIA[gcs_camellia.py<br/>Camellia-128<br/>c3]:::preQuantum
+            G_HIGHT[gcs_hight.py<br/>HIGHT<br/>c4]:::preQuantum
+            
+            %% Post-Quantum Algorithms
+            G_DILITHIUM[gcs_dilithium2/3/5.py<br/>ML-DSA Signatures<br/>c5]:::postQuantum
+            G_KYBER[gcs_kyber_512/768/1024.py<br/>ML-KEM Key Exchange<br/>c6]:::postQuantum
+            G_SPHINCS[gcs_sphincs_*.py<br/>Hash-based Signatures<br/>c7]:::postQuantum
+            G_FALCON[gcs_falcon_512/1024.py<br/>Lattice Signatures<br/>c8]:::postQuantum
+        end
+        
+        %% Simplified Implementations
+        subgraph SGCS ["Simplified GCS (sgcs/)"]
+            SG_PROXY[singleport_common.py<br/>Unified Implementation]:::network
+        end
+    end
+
+    %% Data Flow Connections
+    
+    %% Telemetry Flow (Drone → GCS)
+    FC -->|Plaintext MAVLink| P5820
+    P5820 --> D_ASCON
+    P5820 --> D_SPECK
+    P5820 --> D_CAMELLIA
+    P5820 --> D_HIGHT
+    P5820 --> D_DILITHIUM
+    P5820 --> D_KYBER
+    P5820 --> D_SPHINCS
+    P5820 --> D_FALCON
+    
+    D_ASCON -->|Encrypted| P5821
+    D_SPECK -->|Encrypted| P5821
+    D_CAMELLIA -->|Encrypted| P5821
+    D_HIGHT -->|Encrypted| P5821
+    D_DILITHIUM -->|Signed+Encrypted| P5821
+    D_KYBER -->|Encrypted| P5821
+    D_SPHINCS -->|Signed+Encrypted| P5821
+    D_FALCON -->|Signed+Encrypted| P5821
+    
+    P5821 --> G_ASCON
+    P5821 --> G_SPECK
+    P5821 --> G_CAMELLIA
+    P5821 --> G_HIGHT
+    P5821 --> G_DILITHIUM
+    P5821 --> G_KYBER
+    P5821 --> G_SPHINCS
+    P5821 --> G_FALCON
+    
+    G_ASCON -->|Decrypted| P5822
+    G_SPECK -->|Decrypted| P5822
+    G_CAMELLIA -->|Decrypted| P5822
+    G_HIGHT -->|Decrypted| P5822
+    G_DILITHIUM -->|Verified+Decrypted| P5822
+    G_KYBER -->|Decrypted| P5822
+    G_SPHINCS -->|Verified+Decrypted| P5822
+    G_FALCON -->|Verified+Decrypted| P5822
+    
+    P5822 -->|Plaintext MAVLink| GCS_APP
+
+    %% Command Flow (GCS → Drone)
+    GCS_APP -->|Plaintext MAVLink| P5810
+    P5810 --> G_ASCON
+    P5810 --> G_SPECK
+    P5810 --> G_CAMELLIA
+    P5810 --> G_HIGHT
+    P5810 --> G_DILITHIUM
+    P5810 --> G_KYBER
+    P5810 --> G_SPHINCS
+    P5810 --> G_FALCON
+    
+    G_ASCON -->|Encrypted| P5811
+    G_SPECK -->|Encrypted| P5811
+    G_CAMELLIA -->|Encrypted| P5811
+    G_HIGHT -->|Encrypted| P5811
+    G_DILITHIUM -->|Signed+Encrypted| P5811
+    G_KYBER -->|Encrypted| P5811
+    G_SPHINCS -->|Signed+Encrypted| P5811
+    G_FALCON -->|Signed+Encrypted| P5811
+    
+    P5811 --> D_ASCON
+    P5811 --> D_SPECK
+    P5811 --> D_CAMELLIA
+    P5811 --> D_HIGHT
+    P5811 --> D_DILITHIUM
+    P5811 --> D_KYBER
+    P5811 --> D_SPHINCS
+    P5811 --> D_FALCON
+    
+    D_ASCON -->|Decrypted| P5812
+    D_SPECK -->|Decrypted| P5812
+    D_CAMELLIA -->|Decrypted| P5812
+    D_HIGHT -->|Decrypted| P5812
+    D_DILITHIUM -->|Verified+Decrypted| P5812
+    D_KYBER -->|Decrypted| P5812
+    D_SPHINCS -->|Verified+Decrypted| P5812
+    D_FALCON -->|Verified+Decrypted| P5812
+    
+    P5812 -->|Plaintext MAVLink| FC
+
+    %% Key Exchange (Post-Quantum only)
+    D_DILITHIUM -.->|TCP Kyber-768 KEM| P5800
+    D_KYBER -.->|TCP Kyber-768 KEM| P5800
+    D_SPHINCS -.->|TCP Kyber-768 KEM| P5800
+    D_FALCON -.->|TCP Kyber-768 KEM| P5800
+    
+    P5800 -.-> G_DILITHIUM
+    P5800 -.-> G_KYBER
+    P5800 -.-> G_SPHINCS
+    P5800 -.-> G_FALCON
+
+    %% Legend
+    subgraph LEGEND ["📋 LEGEND"]
+        L1[Pre-Quantum Algorithms<br/>Direct PSK Encryption]:::preQuantum
+        L2[Post-Quantum Algorithms<br/>Kyber KEM + AES-GCM]:::postQuantum
+        L3[Network Ports<br/>UDP/TCP Communication]:::port
+        L4[Simplified Implementation<br/>singleport_common.py]:::network
+    end
+
+    %% Additional Information
+    subgraph INFO ["ℹ️ IMPLEMENTATION DETAILS"]
+        I1["🔐 Security Features:<br/>• AES-256-GCM Transport<br/>• Digital Signatures (PQC)<br/>• Forward Secrecy<br/>• Nonce-based Encryption"]
+        I2["🏗️ Architecture:<br/>• UDP Proxy Pattern<br/>• Dual-Thread Design<br/>• Error Handling & Retry<br/>• Timeout Management"]
+        I3["📊 Algorithm Coverage:<br/>• 4 Pre-Quantum (c1-c4)<br/>• 4 Post-Quantum (c5-c8)<br/>• NIST Standards Compliant<br/>• Research Framework Ready"]
+    end

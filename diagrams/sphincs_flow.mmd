@@ -1,0 +1,144 @@
+graph TB
+    %% SPHINCS+-SHA2-128f Hash-based Signature Flow Diagram
+    %% Research Paper Quality - Post-Quantum Algorithm c7
+    
+    classDef droneNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef gcsNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef pqcOp fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px,color:#000
+    classDef sigOp fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000
+    classDef keyExchange fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    classDef portNode fill:#fff9c4,stroke:#f9a825,stroke-width:2px,color:#000
+
+    subgraph INITIALIZATION ["🔐 Key Exchange & Setup Phase (TCP Port 5800)"]
+        subgraph DRONE_INIT ["Drone Initialization"]
+            D_SPHINCS[SPHINCS+-SHA2-128f Setup<br/>Generate Keypair<br/>Public Key: 32 bytes<br/>Secret Key: 64 bytes]:::pqcOp
+            D_KYBER[Kyber-768 KEM<br/>Client Mode<br/>For Session Key]:::pqcOp
+            D_KEY_DERIVE[Derive AES Key<br/>SHA-256(kyber_secret)<br/>Initialize AES-256-GCM]:::keyExchange
+        end
+        
+        subgraph GCS_INIT ["GCS Initialization"]
+            G_SPHINCS[SPHINCS+-SHA2-128f Setup<br/>Generate Keypair<br/>Public Key: 32 bytes<br/>Secret Key: 64 bytes]:::pqcOp
+            G_KYBER[Kyber-768 KEM<br/>Server Mode<br/>For Session Key]:::pqcOp
+            G_KEY_DERIVE[Derive AES Key<br/>SHA-256(kyber_secret)<br/>Initialize AES-256-GCM]:::keyExchange
+        end
+        
+        %% Key Exchange Flow
+        D_KYBER -.->|TCP Handshake| G_KYBER
+        D_SPHINCS -.->|Exchange Public Keys| G_SPHINCS
+        D_KEY_DERIVE -.->|Same Session Key| G_KEY_DERIVE
+    end
+
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE - SPHINCS+-SHA2-128f Implementation"]
+        FC[Flight Controller<br/>MAVLink Source]:::droneNode
+        
+        subgraph DRONE_CRYPTO ["drone_sphincs_sha2_128f.py Process"]
+            D_LISTEN[Listen Thread<br/>Port 5820<br/>Plaintext Telemetry]:::droneNode
+            
+            subgraph D_SIGN_PROCESS ["SPHINCS+ Signing Process"]
+                D_HASH[SHA-256 Hash<br/>Input: MAVLink message<br/>Output: 32-byte digest<br/>Stateless operation]:::sigOp
+                D_SIGN[SPHINCS+-SHA2-128f Sign<br/>Input: Message hash<br/>Output: 17088-byte signature<br/>Hash-based signature]:::sigOp
+                D_FRAME[Frame Signed Message<br/>SPX128F_SIG + sig_len + signature +<br/>SPX128F_MSG + plaintext]:::sigOp
+                D_ENCRYPT[AES-256-GCM Encrypt<br/>Input: Signed frame<br/>Output: nonce || ciphertext]:::keyExchange
+            end
+            
+            D_SEND[Send Thread<br/>Port 5821<br/>Signed + Encrypted]:::droneNode
+            
+            D_RECV[Receive Thread<br/>Port 5811<br/>Signed + Encrypted Commands]:::droneNode
+            
+            subgraph D_VERIFY_PROCESS ["SPHINCS+ Verification Process"]
+                D_DECRYPT[AES-256-GCM Decrypt<br/>Extract: nonce, ciphertext<br/>Output: Signed frame]:::keyExchange
+                D_PARSE[Parse Signed Frame<br/>Extract: signature, message<br/>Validate markers]:::sigOp
+                D_HASH_V[SHA-256 Hash<br/>Input: Extracted message<br/>Output: 32-byte digest<br/>For verification]:::sigOp
+                D_VERIFY[SPHINCS+-SHA2-128f Verify<br/>Input: hash, signature, GCS_pubkey<br/>Output: True/False<br/>Stateless verification]:::sigOp
+            end
+            
+            D_FORWARD[Forward Thread<br/>Port 5812<br/>Verified Commands Only]:::droneNode
+        end
+    end
+
+    subgraph NETWORK ["🌐 Network Layer"]
+        P5800[Port 5800<br/>TCP Key Exchange<br/>+ Public Key Exchange]:::portNode
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::portNode
+        P5821[Port 5821<br/>GCS Signed+Encrypted TLM]:::portNode
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::portNode
+        P5811[Port 5811<br/>Drone Signed+Encrypted CMD]:::portNode
+        P5812[Port 5812<br/>Drone Verified CMD]:::portNode
+        P5822[Port 5822<br/>GCS Verified TLM]:::portNode
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE - SPHINCS+-SHA2-128f Implementation"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]:::gcsNode
+        
+        subgraph GCS_CRYPTO ["gcs_sphincs_sha2_128f.py Process"]
+            G_LISTEN_CMD[Listen Thread<br/>Port 5810<br/>Plaintext Commands]:::gcsNode
+            
+            subgraph G_SIGN_PROCESS ["SPHINCS+ Signing Process"]
+                G_HASH[SHA-256 Hash<br/>Input: MAVLink message<br/>Output: 32-byte digest<br/>Stateless operation]:::sigOp
+                G_SIGN[SPHINCS+-SHA2-128f Sign<br/>Input: Message hash<br/>Output: 17088-byte signature<br/>Hash-based signature]:::sigOp
+                G_FRAME[Frame Signed Message<br/>SPX128F_SIG + sig_len + signature +<br/>SPX128F_MSG + plaintext]:::sigOp
+                G_ENCRYPT[AES-256-GCM Encrypt<br/>Input: Signed frame<br/>Output: nonce || ciphertext]:::keyExchange
+            end
+            
+            G_SEND[Send Thread<br/>Port 5811<br/>Signed + Encrypted]:::gcsNode
+            
+            G_LISTEN_TLM[Listen Thread<br/>Port 5821<br/>Signed + Encrypted Telemetry]:::gcsNode
+            
+            subgraph G_VERIFY_PROCESS ["SPHINCS+ Verification Process"]
+                G_DECRYPT[AES-256-GCM Decrypt<br/>Extract: nonce, ciphertext<br/>Output: Signed frame]:::keyExchange
+                G_PARSE[Parse Signed Frame<br/>Extract: signature, message<br/>Validate markers]:::sigOp
+                G_HASH_V[SHA-256 Hash<br/>Input: Extracted message<br/>Output: 32-byte digest<br/>For verification]:::sigOp
+                G_VERIFY[SPHINCS+-SHA2-128f Verify<br/>Input: hash, signature, Drone_pubkey<br/>Output: True/False<br/>Stateless verification]:::sigOp
+            end
+            
+            G_FORWARD_TLM[Forward Thread<br/>Port 5822<br/>Verified Telemetry Only]:::gcsNode
+        end
+    end
+
+    %% Key Exchange Connections
+    D_KEY_DERIVE --> P5800
+    P5800 --> G_KEY_DERIVE
+
+    %% Data Flow - Telemetry Path (Drone → GCS)
+    FC -->|MAVLink Telemetry| P5820
+    P5820 --> D_LISTEN
+    D_LISTEN --> D_HASH
+    D_HASH --> D_SIGN
+    D_SIGN --> D_FRAME
+    D_FRAME --> D_ENCRYPT
+    D_ENCRYPT --> D_SEND
+    D_SEND -->|UDP Signed+Encrypted| P5821
+    P5821 --> G_LISTEN_TLM
+    G_LISTEN_TLM --> G_DECRYPT
+    G_DECRYPT --> G_PARSE
+    G_PARSE --> G_HASH_V
+    G_HASH_V --> G_VERIFY
+    G_VERIFY -->|If Valid| G_FORWARD_TLM
+    G_FORWARD_TLM -->|Verified MAVLink| P5822
+    P5822 --> GCS_APP
+
+    %% Data Flow - Command Path (GCS → Drone)
+    GCS_APP -->|MAVLink Commands| P5810
+    P5810 --> G_LISTEN_CMD
+    G_LISTEN_CMD --> G_HASH
+    G_HASH --> G_SIGN
+    G_SIGN --> G_FRAME
+    G_FRAME --> G_ENCRYPT
+    G_ENCRYPT --> G_SEND
+    G_SEND -->|UDP Signed+Encrypted| P5811
+    P5811 --> D_RECV
+    D_RECV --> D_DECRYPT
+    D_DECRYPT --> D_PARSE
+    D_PARSE --> D_HASH_V
+    D_HASH_V --> D_VERIFY
+    D_VERIFY -->|If Valid| D_FORWARD
+    D_FORWARD -->|Verified MAVLink| P5812
+    P5812 --> FC
+
+    %% Algorithm Details
+    subgraph ALGO_DETAILS ["📋 SPHINCS+-SHA2-128f Algorithm Details"]
+        SPECS["🔐 SPHINCS+-SHA2-128f Specifications<br/>• Type: Hash-based Digital Signature<br/>• Security Level: NIST Level 1 (128-bit equivalent)<br/>• Public Key Size: 32 bytes<br/>• Signature Size: 17088 bytes<br/>• Private Key Size: 64 bytes<br/>• Standard: NIST Round 3 Alternate<br/>• Variant: SPHINCS+-SHA2-128f (c7 in research paper)"]:::pqcOp
+        
+        IMPL["⚙️ Implementation Details<br/>• Library: oqs.oqs (liboqs-python)<br/>• Hash Function: SHA-256<br/>• Session Key: Kyber-768 KEM + AES-256-GCM<br/>• Frame Format: [MARKER][sig_len][signature][MARKER][message]<br/>• Markers: SPX128F_SIG, SPX128F_MSG<br/>• Stateless: No key state management required"]:::sigOp
+        
+        SECURITY["🛡️ Security Properties<br/>• Post-Quantum Security: Hash-based construction<br/>• Stateless: No key state to manage<br/>• Conservative Security: Based on hash functions<br/>• Large Signatures: Trade-off for security<br/>• Quantum-Safe: Resistant to all known attacks"]:::keyExchange
+    end

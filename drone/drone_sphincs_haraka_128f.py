@@ -130,7 +130,11 @@ def decrypt_message(em: bytes) -> bytes:
 def telemetry_to_gcs_thread():
     ls = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ls.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    try:
+        ls.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    except OSError as e:
+        print(f"[SPHINCS+-Haraka-128f Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM} -> {e}; using 0.0.0.0")
+        ls.bind(("0.0.0.0", PORT_DRONE_LISTEN_PLAINTEXT_TLM))
     ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print(f"[{ALGORITHM_NAME} Drone] Listening telemetry {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM} -> {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM}")
     while True:
@@ -149,7 +153,11 @@ def telemetry_to_gcs_thread():
 def commands_from_gcs_thread():
     ls = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ls.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    try:
+        ls.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    except OSError as e:
+        print(f"[SPHINCS+-Haraka-128f Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD} -> {e}; using 0.0.0.0")
+        ls.bind(("0.0.0.0", PORT_DRONE_LISTEN_ENCRYPTED_CMD))
     ss = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print(f"[{ALGORITHM_NAME} Drone] Listening commands {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD} -> {DRONE_HOST}:{PORT_DRONE_FORWARD_DECRYPTED_CMD}")
     while True:

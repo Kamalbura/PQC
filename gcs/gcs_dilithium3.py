@@ -71,7 +71,11 @@ def setup_key_exchange():
     print(f"[{ALGORITHM_NAME} GCS] Setting up key exchange server...")
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    try:
+        server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] TCP bind failed on {GCS_HOST}:{PORT_KEY_EXCHANGE} -> {e}; falling back to 0.0.0.0")
+        server_sock.bind(("0.0.0.0", PORT_KEY_EXCHANGE))
     server_sock.listen(1)
     print(f"[{ALGORITHM_NAME} GCS] Waiting for drone connection on {GCS_HOST}:{PORT_KEY_EXCHANGE}")
     try:
@@ -82,7 +86,6 @@ def setup_key_exchange():
                 import oqs.oqs as oqs
                 kem = oqs.KeyEncapsulation("ML-KEM-768")
                 kyber_public = kem.generate_keypair()
-                _ = kem.export_secret_key()
                 _send_with_len(conn, kyber_public)
                 ciphertext = _recv_with_len(conn)
                 ss = kem.decap_secret(ciphertext)
@@ -140,7 +143,11 @@ def commands_to_drone_thread():
     # Listen for plaintext commands from GCS applications
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    try:
+        listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_GCS_LISTEN_PLAINTEXT_CMD))
     
     # Socket to send signed+encrypted commands to drone
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -180,7 +187,11 @@ def telemetry_from_drone_thread():
     # Listen for encrypted telemetry from drone
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    try:
+        listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TLM))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TLM} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_GCS_LISTEN_ENCRYPTED_TLM))
     
     # Socket to send verified plaintext telemetry to GCS applications
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -239,7 +250,7 @@ def main():
     print()
     
     try:
-        # Initialize Dilithium2 and Kyber
+    # Initialize Dilithium3 and Kyber
         setup_dilithium_and_kyber()
         
         # Establish session key and exchange public keys

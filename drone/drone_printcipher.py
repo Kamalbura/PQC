@@ -230,7 +230,11 @@ def telemetry_to_gcs_thread():
     # Listen for plaintext telemetry from drone applications
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    try:
+        listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_PLAINTEXT_TLM))
+    except OSError as e:
+        print(f"[PRINTcipher Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_PLAINTEXT_TLM} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_DRONE_LISTEN_PLAINTEXT_TLM))
     
     # Socket to send encrypted telemetry to GCS
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -258,7 +262,11 @@ def commands_from_gcs_thread():
     # Listen for encrypted commands from GCS
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    try:
+        listen_sock.bind((DRONE_HOST, PORT_DRONE_LISTEN_ENCRYPTED_CMD))
+    except OSError as e:
+        print(f"[PRINTcipher Drone] UDP bind failed on {DRONE_HOST}:{PORT_DRONE_LISTEN_ENCRYPTED_CMD} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_DRONE_LISTEN_ENCRYPTED_CMD))
     
     # Socket to send plaintext commands to drone applications
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

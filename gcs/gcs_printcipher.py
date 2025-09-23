@@ -167,7 +167,11 @@ def setup_printcipher_key_exchange():
     # Create TCP server for key exchange
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    try:
+        server_sock.bind((GCS_HOST, PORT_KEY_EXCHANGE))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] TCP bind failed on {GCS_HOST}:{PORT_KEY_EXCHANGE} -> {e}; using 0.0.0.0")
+        server_sock.bind(("0.0.0.0", PORT_KEY_EXCHANGE))
     server_sock.listen(1)
     
     print(f"[{ALGORITHM_NAME} GCS] Waiting for drone connection on {GCS_HOST}:{PORT_KEY_EXCHANGE}")
@@ -231,7 +235,11 @@ def commands_to_drone_thread():
     # Listen for plaintext commands from GCS applications
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    try:
+        listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_PLAINTEXT_CMD))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_PLAINTEXT_CMD} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_GCS_LISTEN_PLAINTEXT_CMD))
     
     # Socket to send encrypted commands to drone
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -259,7 +267,11 @@ def telemetry_from_drone_thread():
     # Listen for encrypted telemetry from drone
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TELEM))
+    try:
+        listen_sock.bind((GCS_HOST, PORT_GCS_LISTEN_ENCRYPTED_TELEM))
+    except OSError as e:
+        print(f"[{ALGORITHM_NAME} GCS] UDP bind failed on {GCS_HOST}:{PORT_GCS_LISTEN_ENCRYPTED_TELEM} -> {e}; using 0.0.0.0")
+        listen_sock.bind(("0.0.0.0", PORT_GCS_LISTEN_ENCRYPTED_TELEM))
     
     # Socket to send plaintext telemetry to GCS applications
     send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

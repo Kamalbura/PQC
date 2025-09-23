@@ -26,6 +26,21 @@ from singleport_common import (
     MAGIC_BYTES,
 )
 
+# Prefer centralized project-level IP config for ports if present
+try:
+    from project_ip_config import (
+        PORT_GCS_LISTEN_ENCRYPTED_TLM, PORT_GCS_LISTEN_PLAINTEXT_CMD, PORT_GCS_FORWARD_DECRYPTED_TLM,
+        PORT_DRONE_LISTEN_ENCRYPTED_CMD, PORT_DRONE_LISTEN_PLAINTEXT_TLM, PORT_DRONE_FORWARD_DECRYPTED_CMD,
+    )
+except Exception:
+    # fallback defaults matching earlier behavior
+    PORT_GCS_LISTEN_ENCRYPTED_TLM = 5821
+    PORT_GCS_LISTEN_PLAINTEXT_CMD = 5810
+    PORT_GCS_FORWARD_DECRYPTED_TLM = 5822
+    PORT_DRONE_LISTEN_ENCRYPTED_CMD = 5811
+    PORT_DRONE_LISTEN_PLAINTEXT_TLM = 5820
+    PORT_DRONE_FORWARD_DECRYPTED_CMD = 5812
+
 
 async def run_proxy_async(role: str, algo: str,
                           public_host: str = '0.0.0.0', public_port: int = 5821,
@@ -45,20 +60,22 @@ async def run_proxy_async(role: str, algo: str,
     if algo.lower().startswith('dilithium') or algo.lower().startswith('falcon') or algo.lower().startswith('sphincs'):
         # signature handshake
         if role == 'gcs':
-            aes_key = tcp_signature_handshake_gcs(public_host, algo.title(), PORT_KEY_EXCHANGE)
+            # Bind signature server on all interfaces to avoid invalid-address errors
+            aes_key = tcp_signature_handshake_gcs('0.0.0.0', algo.title(), PORT_KEY_EXCHANGE)
         else:
             aes_key = tcp_signature_handshake_drone(gcs_host, algo.title(), PORT_KEY_EXCHANGE)
         if aes_key is None:
             # fall back to KEM
             if role == 'gcs':
-                aes_key = tcp_key_exchange_gcs(public_host, 'ML-KEM-768', PORT_KEY_EXCHANGE)
+                aes_key = tcp_key_exchange_gcs('0.0.0.0', 'ML-KEM-768', PORT_KEY_EXCHANGE)
             else:
                 aes_key = tcp_key_exchange_drone(gcs_host, 'ML-KEM-768', PORT_KEY_EXCHANGE)
     else:
         # KEM flow (map a simple mapping here)
         kem_name = 'ML-KEM-512' if '512' in algo else ('ML-KEM-1024' if '1024' in algo else 'ML-KEM-768')
         if role == 'gcs':
-            aes_key = tcp_key_exchange_gcs(public_host, kem_name, PORT_KEY_EXCHANGE)
+            # Listen on all interfaces for KEX
+            aes_key = tcp_key_exchange_gcs('0.0.0.0', kem_name, PORT_KEY_EXCHANGE)
         else:
             aes_key = tcp_key_exchange_drone(gcs_host, kem_name, PORT_KEY_EXCHANGE)
 
@@ -68,7 +85,12 @@ async def run_proxy_async(role: str, algo: str,
     public_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     public_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     public_sock.setblocking(False)
-    public_sock.bind((public_host, public_port))
+    try:
+        public_sock.bind((public_host, public_port))
+    except OSError as e:
+        # If binding to specific IP fails (not present), fall back to 0.0.0.0
+        print(f'[{prefix}] public bind failed on {public_host}:{public_port} -> {e}; falling back to 0.0.0.0')
+        public_sock.bind(('0.0.0.0', public_port))
     print(f'[{prefix}] public UDP bound on {public_host}:{public_port}')
 
     local_in_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -138,8 +160,10 @@ async def run_proxy_async(role: str, algo: str,
                 addr_remote = session.get('addr')
                 print(f'[{prefix}] current remote addr={addr_remote} last_seen={session.get("last_seen")}')
                 if addr_remote is None or (time.time() - session.get('last_seen', 0)) > 120:
-                    print(f'[{prefix}] no remote addr known; dropping packet')
-                    continue
+                    # send to peer derived from role
+                    peer_port = PORT_DRONE_LISTEN_ENCRYPTED_CMD if role == 'gcs' else PORT_GCS_LISTEN_ENCRYPTED_TLM
+                    addr_remote = (gcs_host, peer_port)
+                    print(f'[{prefix}] no recent remote; using peer default {addr_remote}')
                 await loop.sock_sendto(public_sock, encrypted, addr_remote)
                 print(f'[{prefix}] sent {len(encrypted)} bytes encrypted to {addr_remote}')
             except asyncio.CancelledError:
@@ -160,7 +184,9 @@ async def run_proxy_async(role: str, algo: str,
             probe_ct = None
         if probe_ct:
             try:
-                await loop.sock_sendto(public_sock, probe_ct, (gcs_host, 5811 if role == 'gcs' else 5821))
+                # if I'm GCS, my peer is the drone command listener (5811). If I'm Drone, my peer is GCS telemetry listener (5821)
+                peer_port = PORT_DRONE_LISTEN_ENCRYPTED_CMD if role == 'gcs' else PORT_GCS_LISTEN_ENCRYPTED_TLM
+                await loop.sock_sendto(public_sock, probe_ct, (gcs_host, peer_port))
             except Exception:
                 # best-effort send; ignore
                 pass

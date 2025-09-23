@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post-Quantum Cryptography Drone-GCS Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+        .diagram-container {
+            padding: 30px;
+            background: white;
+            overflow-x: auto;
+        }
+        .mermaid {
+            text-align: center;
+        }
+        .info-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-top: 1px solid #e9ecef;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+        }
+        .info-card h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 1.3em;
+        }
+        .info-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .info-card li {
+            margin: 8px 0;
+            color: #555;
+        }
+        .algorithm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .algo-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+        .algo-card.post-quantum {
+            border-left-color: #27ae60;
+        }
+        .algo-card h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .algo-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚁 Post-Quantum Cryptography Architecture</h1>
+            <p>Secure Drone-GCS Communication Framework</p>
+        </div>
+        
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    %% Styling
+    classDef droneBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef gcsBox fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef preQuantum fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef postQuantum fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef network fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef port fill:#fff9c4,stroke:#f57f17,stroke-width:1px
+
+    %% Main Architecture
+    subgraph DRONE_SIDE ["🚁 DRONE SIDE (192.168.0.102)"]
+        FC[Flight Controller<br/>MAVLink Source]
+        
+        subgraph DRONE_ALGOS ["Drone Cryptographic Proxies"]
+            %% Pre-Quantum Algorithms
+            D_ASCON[drone_ascon.py<br/>ASCON-128 AEAD<br/>c1]:::preQuantum
+            D_SPECK[drone_speck.py<br/>SPECK-128/128<br/>c2]:::preQuantum
+            D_CAMELLIA[drone_camellia.py<br/>Camellia-128<br/>c3]:::preQuantum
+            D_HIGHT[drone_hight.py<br/>HIGHT<br/>c4]:::preQuantum
+            
+            %% Post-Quantum Algorithms
+            D_DILITHIUM[drone_dilithium2/3/5.py<br/>ML-DSA Signatures<br/>c5]:::postQuantum
+            D_KYBER[drone_kyber_512/768/1024.py<br/>ML-KEM Key Exchange<br/>c6]:::postQuantum
+            D_SPHINCS[drone_sphincs_*.py<br/>Hash-based Signatures<br/>c7]:::postQuantum
+            D_FALCON[drone_falcon_512/1024.py<br/>Lattice Signatures<br/>c8]:::postQuantum
+        end
+    end
+
+    subgraph NETWORK ["🌐 NETWORK LAYER"]
+        %% Port Definitions
+        P5800[Port 5800<br/>TCP Key Exchange]:::port
+        P5810[Port 5810<br/>GCS Plaintext CMD]:::port
+        P5811[Port 5811<br/>Drone Encrypted CMD]:::port
+        P5812[Port 5812<br/>Drone Decrypted CMD]:::port
+        P5820[Port 5820<br/>Drone Plaintext TLM]:::port
+        P5821[Port 5821<br/>GCS Encrypted TLM]:::port
+        P5822[Port 5822<br/>GCS Decrypted TLM]:::port
+    end
+
+    subgraph GCS_SIDE ["🖥️ GCS SIDE (192.168.0.104)"]
+        GCS_APP[GCS Application<br/>MAVLink Destination]
+        
+        subgraph GCS_ALGOS ["GCS Cryptographic Proxies"]
+            %% Pre-Quantum Algorithms
+            G_ASCON[gcs_ascon.py<br/>ASCON-128 AEAD<br/>c1]:::preQuantum
+            G_SPECK[gcs_speck.py<br/>SPECK-128/128<br/>c2]:::preQuantum
+            G_CAMELLIA[gcs_camellia.py<br/>Camellia-128<br/>c3]:::preQuantum
+            G_HIGHT[gcs_hight.py<br/>HIGHT<br/>c4]:::preQuantum
+            
+            %% Post-Quantum Algorithms
+            G_DILITHIUM[gcs_dilithium2/3/5.py<br/>ML-DSA Signatures<br/>c5]:::postQuantum
+            G_KYBER[gcs_kyber_512/768/1024.py<br/>ML-KEM Key Exchange<br/>c6]:::postQuantum
+            G_SPHINCS[gcs_sphincs_*.py<br/>Hash-based Signatures<br/>c7]:::postQuantum
+            G_FALCON[gcs_falcon_512/1024.py<br/>Lattice Signatures<br/>c8]:::postQuantum
+        end
+    end
+
+    %% Data Flow Connections
+    
+    %% Telemetry Flow (Drone → GCS)
+    FC -->|Plaintext MAVLink| P5820
+    P5820 --> D_ASCON
+    P5820 --> D_SPECK
+    P5820 --> D_CAMELLIA
+    P5820 --> D_HIGHT
+    P5820 --> D_DILITHIUM
+    P5820 --> D_KYBER
+    P5820 --> D_SPHINCS
+    P5820 --> D_FALCON
+    
+    D_ASCON -->|Encrypted| P5821
+    D_SPECK -->|Encrypted| P5821
+    D_CAMELLIA -->|Encrypted| P5821
+    D_HIGHT -->|Encrypted| P5821
+    D_DILITHIUM -->|Signed+Encrypted| P5821
+    D_KYBER -->|Encrypted| P5821
+    D_SPHINCS -->|Signed+Encrypted| P5821
+    D_FALCON -->|Signed+Encrypted| P5821
+    
+    P5821 --> G_ASCON
+    P5821 --> G_SPECK
+    P5821 --> G_CAMELLIA
+    P5821 --> G_HIGHT
+    P5821 --> G_DILITHIUM
+    P5821 --> G_KYBER
+    P5821 --> G_SPHINCS
+    P5821 --> G_FALCON
+    
+    G_ASCON -->|Decrypted| P5822
+    G_SPECK -->|Decrypted| P5822
+    G_CAMELLIA -->|Decrypted| P5822
+    G_HIGHT -->|Decrypted| P5822
+    G_DILITHIUM -->|Verified+Decrypted| P5822
+    G_KYBER -->|Decrypted| P5822
+    G_SPHINCS -->|Verified+Decrypted| P5822
+    G_FALCON -->|Verified+Decrypted| P5822
+    
+    P5822 -->|Plaintext MAVLink| GCS_APP
+
+    %% Command Flow (GCS → Drone)
+    GCS_APP -->|Plaintext MAVLink| P5810
+    P5810 --> G_ASCON
+    P5810 --> G_SPECK
+    P5810 --> G_CAMELLIA
+    P5810 --> G_HIGHT
+    P5810 --> G_DILITHIUM
+    P5810 --> G_KYBER
+    P5810 --> G_SPHINCS
+    P5810 --> G_FALCON
+    
+    G_ASCON -->|Encrypted| P5811
+    G_SPECK -->|Encrypted| P5811
+    G_CAMELLIA -->|Encrypted| P5811
+    G_HIGHT -->|Encrypted| P5811
+    G_DILITHIUM -->|Signed+Encrypted| P5811
+    G_KYBER -->|Encrypted| P5811
+    G_SPHINCS -->|Signed+Encrypted| P5811
+    G_FALCON -->|Signed+Encrypted| P5811
+    
+    P5811 --> D_ASCON
+    P5811 --> D_SPECK
+    P5811 --> D_CAMELLIA
+    P5811 --> D_HIGHT
+    P5811 --> D_DILITHIUM
+    P5811 --> D_KYBER
+    P5811 --> D_SPHINCS
+    P5811 --> D_FALCON
+    
+    D_ASCON -->|Decrypted| P5812
+    D_SPECK -->|Decrypted| P5812
+    D_CAMELLIA -->|Decrypted| P5812
+    D_HIGHT -->|Decrypted| P5812
+    D_DILITHIUM -->|Verified+Decrypted| P5812
+    D_KYBER -->|Decrypted| P5812
+    D_SPHINCS -->|Verified+Decrypted| P5812
+    D_FALCON -->|Verified+Decrypted| P5812
+    
+    P5812 -->|Plaintext MAVLink| FC
+
+    %% Key Exchange (Post-Quantum only)
+    D_DILITHIUM -.->|TCP Kyber-768 KEM| P5800
+    D_KYBER -.->|TCP Kyber-768 KEM| P5800
+    D_SPHINCS -.->|TCP Kyber-768 KEM| P5800
+    D_FALCON -.->|TCP Kyber-768 KEM| P5800
+    
+    P5800 -.-> G_DILITHIUM
+    P5800 -.-> G_KYBER
+    P5800 -.-> G_SPHINCS
+    P5800 -.-> G_FALCON
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>📋 Architecture Overview</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🔐 Security Features</h3>
+                    <ul>
+                        <li>AES-256-GCM Transport Encryption</li>
+                        <li>Post-Quantum Digital Signatures</li>
+                        <li>Forward Secrecy via Kyber KEM</li>
+                        <li>Nonce-based Authenticated Encryption</li>
+                        <li>Replay Attack Protection</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🏗️ Network Architecture</h3>
+                    <ul>
+                        <li>UDP Proxy Pattern for Low Latency</li>
+                        <li>Dual-Thread Design per Algorithm</li>
+                        <li>Standardized Port Range (5800-5822)</li>
+                        <li>TCP Key Exchange (Port 5800)</li>
+                        <li>Bidirectional MAVLink Flow</li>
+                    </ul>
+                </div>
+                
+                <div class="info-card">
+                    <h3>📊 Implementation Quality</h3>
+                    <ul>
+                        <li>100% Algorithm Coverage (c1-c8)</li>
+                        <li>NIST Standards Compliant</li>
+                        <li>Perfect Drone-GCS Symmetry</li>
+                        <li>Robust Error Handling</li>
+                        <li>Research Framework Ready</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3>🧮 Cryptographic Algorithms</h3>
+            <div class="algorithm-grid">
+                <div class="algo-card">
+                    <h4>c1: ASCON-128</h4>
+                    <p>NIST Lightweight Crypto Winner - AEAD</p>
+                </div>
+                <div class="algo-card">
+                    <h4>c2: SPECK-128</h4>
+                    <p>NSA Lightweight Block Cipher</p>
+                </div>
+                <div class="algo-card">
+                    <h4>c3: Camellia-128</h4>
+                    <p>ISO Standard Block Cipher</p>
+                </div>
+                <div class="algo-card">
+                    <h4>c4: HIGHT</h4>
+                    <p>Korean Lightweight Standard</p>
+                </div>
+                <div class="algo-card post-quantum">
+                    <h4>c5: Dilithium</h4>
+                    <p>NIST PQC Digital Signatures (ML-DSA)</p>
+                </div>
+                <div class="algo-card post-quantum">
+                    <h4>c6: Kyber</h4>
+                    <p>NIST PQC Key Encapsulation (ML-KEM)</p>
+                </div>
+                <div class="algo-card post-quantum">
+                    <h4>c7: SPHINCS+</h4>
+                    <p>Hash-based Stateless Signatures</p>
+                </div>
+                <div class="algo-card post-quantum">
+                    <h4>c8: Falcon</h4>
+                    <p>Lattice-based Compact Signatures</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>
